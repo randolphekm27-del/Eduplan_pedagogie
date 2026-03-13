@@ -1,8 +1,8 @@
 import OpenAI from 'openai';
 
 const deepseekAPI = new OpenAI({
-    apiKey: process.env.VITE_DEEPSEEK_API_KEY || process.env.DEEPSEEK_API_KEY || '',
-    baseURL: 'https://api.deepseek.com',
+    apiKey: (import.meta as any).env.VITE_DEEPSEEK_API_KEY || (import.meta as any).env.DEEPSEEK_API_KEY || '',
+    baseURL: 'https://api.deepseek.com/v1',
     dangerouslyAllowBrowser: true,
     defaultHeaders: {
         'User-Agent': 'Eduplan-App/1.0',

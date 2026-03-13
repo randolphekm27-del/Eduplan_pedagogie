@@ -108,31 +108,42 @@ export default function Preview() {
     if (!ficheData) return;
     
     setIsExporting(true);
+    const loadingToast = toast.loading('Préparation du PDF...');
+    
     try {
-      // Utiliser un conteneur temporaire pour l'export
-      const container = document.createElement('div');
-      container.className = 'p-8 bg-white';
-      
-      // Rendre toutes les pages dans le conteneur
-      const root = ReactDOM.createRoot(container);
-      root.render(renderAllPages());
-      
-      // Attendre un court instant pour le rendu
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // 1. Récupérer l'élément visible
+      const element = document.getElementById('preview-content');
+      if (!element) throw new Error('Contenu introuvable');
 
+      // 2. Créer une copie pour l'export (évite de modifier l'original)
+      const container = element.cloneNode(true) as HTMLElement;
+      container.style.padding = '40px';
+      container.style.background = 'white';
+      container.style.width = '800px'; // Largeur fixe pour la cohérence du PDF
+
+      // 3. Configuration html2pdf
       const opt = {
         margin: [0.5, 0.5, 0.5, 0.5] as [number, number, number, number],
-        filename: `fiche-${ficheData.titre.substring(0, 30)}.pdf`,
-        image: { type: 'jpeg' as const, quality: 0.98 },
-        html2canvas: { scale: 2, letterRendering: true },
-        jsPDF: { unit: 'in', format: 'a4' as const, orientation: 'portrait' as const },
+        filename: `fiche-${ficheData.titre.substring(0, 30).replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { 
+          scale: 2, 
+          useCORS: true,
+          letterRendering: true,
+          logging: false
+        },
+        jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' },
         pagebreak: { mode: ['css', 'legacy'] }
       };
 
+      // 4. Génération
       await html2pdf().set(opt).from(container).save();
-      root.unmount();
-      toast.success('PDF généré avec succès');
+      
+      toast.dismiss(loadingToast);
+      toast.success('PDF téléchargé avec succès');
     } catch (error) {
+      console.error('PDF Export Error:', error);
+      toast.dismiss(loadingToast);
       toast.error('Erreur lors de la génération du PDF');
     } finally {
       setIsExporting(false);
@@ -144,38 +155,26 @@ export default function Preview() {
     if (!ficheData) return;
     
     setIsExporting(true);
-    try {
-      // Créer un conteneur temporaire pour l'export
-      const container = document.createElement('div');
-      container.className = 'p-8 bg-white';
-      
-      // Rendre toutes les pages dans le conteneur
-      const root = ReactDOM.createRoot(container);
-      root.render(renderAllPages());
-      
-      // Attendre un court instant pour le rendu
-      await new Promise(resolve => setTimeout(resolve, 500));
+    const loadingToast = toast.loading('Préparation du document Word...');
 
-      // Récupérer le contenu HTML
-      const content = container.innerHTML;
+    try {
+      const element = document.getElementById('preview-content');
+      if (!element) throw new Error('Contenu introuvable');
       
-      // Créer un document Word avec mise en forme
+      const content = element.innerHTML;
+      
       const html = `
-        <!DOCTYPE html>
-        <html>
+        <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
         <head>
-          <meta charset="UTF-8">
+          <meta charset="utf-8">
           <title>${ficheData.titre}</title>
           <style>
-            body { font-family: 'Times New Roman', serif; margin: 2cm; }
-            h1 { font-size: 24pt; text-align: center; text-decoration: underline; margin-bottom: 20pt; }
-            h2 { font-size: 18pt; margin-top: 15pt; margin-bottom: 10pt; }
-            table { border-collapse: collapse; width: 100%; margin: 15pt 0; }
-            th, td { border: 1px solid black; padding: 8pt; }
-            th { background-color: #f0f0f0; }
-            .page-break { page-break-after: always; }
-            .en-tete { border: 2px solid black; padding: 10pt; margin-bottom: 15pt; }
-            .section { margin-bottom: 20pt; }
+            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; }
+            table { border-collapse: collapse; width: 100%; }
+            th, td { border: 1px solid #000; padding: 8px; text-align: left; }
+            h1 { text-align: center; text-transform: uppercase; text-decoration: underline; }
+            .font-bold { font-weight: bold; }
+            .uppercase { text-transform: uppercase; }
           </style>
         </head>
         <body>
@@ -184,14 +183,15 @@ export default function Preview() {
         </html>
       `;
 
-      // Créer un blob et le télécharger
-      const blob = new Blob([html], { type: 'application/msword' });
-      saveAs(blob, `fiche-${ficheData.titre.substring(0, 30)}.doc`);
+      const blob = new Blob(['\ufeff', html], { type: 'application/msword' });
+      saveAs(blob, `fiche-${ficheData.titre.substring(0, 30).replace(/[^a-z0-9]/gi, '_').toLowerCase()}.doc`);
       
-      root.unmount();
-      toast.success('Document Word généré avec succès');
+      toast.dismiss(loadingToast);
+      toast.success('Document Word exporté');
     } catch (error) {
-      toast.error('Erreur lors de la génération du document Word');
+      console.error('Word Export Error:', error);
+      toast.dismiss(loadingToast);
+      toast.error('Erreur lors de l\'export Word');
     } finally {
       setIsExporting(false);
     }
