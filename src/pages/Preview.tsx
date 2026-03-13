@@ -132,7 +132,7 @@ export default function Preview() {
           letterRendering: true,
           logging: false
         },
-        jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' },
+        jsPDF: { unit: 'in', format: 'a4' as const, orientation: 'portrait' as const },
         pagebreak: { mode: ['css', 'legacy'] }
       };
 
