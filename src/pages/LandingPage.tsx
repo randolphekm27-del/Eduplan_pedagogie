@@ -28,10 +28,10 @@ export default function LandingPage() {
             <a href="#features" className="text-sm font-medium hover:text-edu-red transition-all duration-200 border-b-2 border-transparent hover:border-edu-red">Fonctionnalités</a>
             <a href="#pricing" className="text-sm font-medium hover:text-edu-red transition-all duration-200 border-b-2 border-transparent hover:border-edu-red">Tarifs</a>
             <button onClick={handleComingSoon} className="text-sm font-medium hover:text-edu-red transition-all duration-200 border-b-2 border-transparent hover:border-edu-red">Blog</button>
-            <Link to="/auth" className="text-sm font-medium hover:text-edu-red transition-all duration-200 border-b-2 border-transparent hover:border-edu-red">Connexion</Link>
+            <Link to="/login" className="text-sm font-medium hover:text-edu-red transition-all duration-200 border-b-2 border-transparent hover:border-edu-red">Connexion</Link>
           </nav>
           
-          <Link to="/auth">
+          <Link to="/signup">
             <Button variant="primary" className="text-sm px-6 py-2.5">Essayer gratuitement</Button>
           </Link>
         </div>
@@ -62,7 +62,7 @@ export default function LandingPage() {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4"
           >
-            <Link to="/auth">
+            <Link to="/signup">
               <Button variant="primary" className="w-full sm:w-auto px-8 py-3.5" icon={ChevronRight} iconPosition="right">
                 Commencer gratuitement
               </Button>
@@ -266,7 +266,7 @@ export default function LandingPage() {
                 <li className="flex items-center gap-2"><CheckCircle2 size={16} className="text-edu-red" /> Création manuelle</li>
                 <li className="flex items-center gap-2"><CheckCircle2 size={16} className="text-edu-red" /> Export PDF standard</li>
               </ul>
-              <Link to="/auth" className="w-full block text-center border border-edu-light/50 hover:bg-white/5 py-2.5 rounded-[2px] transition-colors">Commencer</Link>
+              <Link to="/signup" className="w-full block text-center border border-edu-light/50 hover:bg-white/5 py-2.5 rounded-[2px] transition-colors">Commencer</Link>
             </div>
             
             {/* Pro */}
@@ -280,7 +280,7 @@ export default function LandingPage() {
                 <li className="flex items-center gap-2"><CheckCircle2 size={16} className="text-edu-red" /> Import de documents</li>
                 <li className="flex items-center gap-2"><CheckCircle2 size={16} className="text-edu-red" /> Export PDF HD sans filigrane</li>
               </ul>
-              <Link to="/auth" className="w-full block text-center bg-edu-red text-white hover:bg-[#5a0808] py-2.5 rounded-[2px] transition-colors shadow-md">S'abonner</Link>
+              <Link to="/signup" className="w-full block text-center bg-edu-red text-white hover:bg-[#5a0808] py-2.5 rounded-[2px] transition-colors shadow-md">S'abonner</Link>
             </div>
             
             {/* Établissement */}

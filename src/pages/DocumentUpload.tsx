@@ -3,8 +3,8 @@ import { Upload, ArrowLeft, FileText, CheckCircle2, Loader2 } from 'lucide-react
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'sonner';
-import { aiService } from '../services/aiService';
 import { storageService } from '../services/storageService';
+import { deepseekAIService } from '../services/deepseekAIService';
 
 export default function DocumentUpload() {
   const [isDragging, setIsDragging] = useState(false);
@@ -45,9 +45,9 @@ export default function DocumentUpload() {
       const reader = new FileReader();
       reader.onload = async (e) => {
         const base64 = e.target?.result as string;
-        const analysis = await aiService.analyzeDocument(base64, file.type);
+        const analysis = await deepseekAIService.analyzeDocument(base64, file.type);
         setDetectedInfo(analysis);
-        toast.success('Document analysé avec succès !');
+        toast.success('Document analysé par Deepseek avec succès !');
       };
       reader.readAsDataURL(file);
     } catch (error) {
@@ -62,9 +62,10 @@ export default function DocumentUpload() {
     if (!pastedText.trim()) return;
     setIsAnalyzing(true);
     try {
-      const analysis = await aiService.generateSheet(`Analyse ce texte et crée une fiche : ${pastedText}`);
+      const result = await deepseekAIService.generateCompletePedagogicalContent(`Analyse ce texte et crée une fiche : ${pastedText}`);
+      const analysis = result.fichesPedagogique;
       setDetectedInfo(analysis);
-      toast.success('Texte analysé avec succès !');
+      toast.success('Texte analysé par Deepseek avec succès !');
     } catch (error) {
       toast.error("Échec de l'analyse du texte.");
     } finally {

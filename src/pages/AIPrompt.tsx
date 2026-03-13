@@ -3,8 +3,8 @@ import { Mic, Paperclip, ArrowLeft, Loader2 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { toast } from 'sonner';
-import { aiService } from '../services/aiService';
 import { storageService } from '../services/storageService';
+import { deepseekAIService } from '../services/deepseekAIService';
 
 export default function AIPrompt() {
   const [isGenerating, setIsGenerating] = useState(false);
@@ -17,28 +17,44 @@ export default function AIPrompt() {
   const handleGenerate = async () => {
     if (!prompt.trim()) return;
     setIsGenerating(true);
-    
+
     try {
-      const fullPrompt = `${prompt} ${subject ? `(Matière: ${subject})` : ''} ${grade ? `(Classe: ${grade})` : ''} ${duration ? `(Durée: ${duration})` : ''}`;
-      const generatedData = await aiService.generateSheet(fullPrompt);
-      
+      toast.loading('Génération par l\'IA Deepseek...', {
+        description: 'Veuillez patienter pendant que Deepseek crée vos documents pédagogiques...'
+      });
+
+      // Générer TOUS les contenus avec Deepseek en une seule requête
+      const result = await deepseekAIService.generateCompletePedagogicalContent(
+        prompt.trim(),
+        subject,
+        grade,
+        duration
+      );
+
+      toast.dismiss(); // Supprimer le toast de chargement
+      toast.success('Génération réussie !', {
+        description: 'Votre fiche pédagogique a été créée par Deepseek.'
+      });
+
+      // Construire la fiche complète avec tous les contenus générés
       const ficheContent = {
         id: Date.now().toString(),
-        titre: generatedData.titre,
+        titre: result.fichesPedagogique.titre,
         enTete: {
-          matiere: generatedData.matiere || subject || "Non spécifié",
-          classe: generatedData.classe || grade || "Non spécifié",
-          theme: generatedData.titre,
-          temps: generatedData.dureeTotale || duration || "1H",
-          objectif: generatedData.objectifGeneral || "",
-          date: new Date().toLocaleDateString('fr-FR')
+          matiere: result.fichesPedagogique.matiere || subject || "Non spécifié",
+          classe: result.fichesPedagogique.classe || grade || "Non spécifié",
+          theme: result.fichesPedagogique.titre,
+          temps: result.fichesPedagogique.dureeTotale || duration || "1H",
+          objectif: result.fichesPedagogique.objectifGeneral || "",
+          date: new Date().toLocaleDateString('fr-FR'),
+          description: result.fichesPedagogique.description || ""
         },
         miseEnSituation: {
-          rappel: "",
-          prerequis: generatedData.preRequis || [],
-          motivation: ""
+          rappel: result.documentEleve.miseEnSituation.contexte || "",
+          prerequis: result.fichesPedagogique.preRequis || [],
+          motivation: result.documentEleve.miseEnSituation.texte || ""
         },
-        sequences: (generatedData.sequences || []).map((seq: any, idx: number) => ({
+        sequences: (result.fichesPedagogique.sequences || []).map((seq: any, idx: number) => ({
           id: `seq-${Date.now()}-${idx}`,
           numero: seq.numero || String.fromCharCode(65 + idx),
           objectif: seq.objectif || "",
@@ -47,24 +63,49 @@ export default function AIPrompt() {
           savoirs: seq.savoirs || "",
           duree: seq.duree || "10 min"
         })),
+        // Document élève COMPLÈTEMENT rempli
         documentEleve: {
-          title: "Document élève",
+          title: result.documentEleve.title || "Document élève",
+          miseEnSituation: {
+            texte: result.documentEleve.miseEnSituation.texte || "",
+            contexte: result.documentEleve.miseEnSituation.contexte || ""
+          },
+          tache: {
+            enonce: result.documentEleve.tache.enonce || "",
+            objectif: result.documentEleve.tache.objectif || ""
+          },
+          supportPedagogique: {
+            titre: result.documentEleve.supportPedagogique.titre || "",
+            contenu: result.documentEleve.supportPedagogique.contenu || ""
+          },
+          consignes: result.documentEleve.consignes.consigne || [],
           contenu: "",
           schema: null,
           formules: [],
-          taches: generatedData.materiel || []
+          taches: result.fichesPedagogique.materiel || []
         },
+        // Synthèse COMPLÈTEMENT remplie
         synthese: {
-          title: "Synthèse",
-          content: ""
+          title: result.ficheSynthese.title || "Synthèse",
+          notionsPrincipales: result.ficheSynthese.notionsPrincipales || [],
+          pointsCles: result.ficheSynthese.pointsCles || [],
+          ideesImportantes: result.ficheSynthese.ideesImportantes || "",
+          resume: result.ficheSynthese.resume || "",
+          content: result.ficheSynthese.resume || ""
         },
+        // Évaluation COMPLÈTEMENT remplie
         evaluation: {
-          title: "Évaluation",
+          title: result.evaluationFormative.title || "Évaluation",
+          objectifEvaluation: result.evaluationFormative.objectifEvaluation || "",
+          questions: result.evaluationFormative.questions || [],
+          critereEvaluation: result.evaluationFormative.critereEvaluation || [],
+          corrige: result.evaluationFormative.corrige || { reponsesAttendues: [] },
           content: ""
         },
+        // Fiche de synthèse (corrigé)
         ficheSynthese: {
-          title: "Corrigé",
-          content: ""
+          title: "Fiche de synthèse / Corrigé",
+          content: result.ficheSynthese.resume || ""
         }
       };
 
@@ -74,17 +115,19 @@ export default function AIPrompt() {
         subject: ficheContent.enTete.matiere,
         class: ficheContent.enTete.classe,
         date: ficheContent.enTete.date,
-        tags: ["IA", "Généré"],
+        tags: ["IA", "Deepseek", "Complet"],
         progress: 100,
         content: ficheContent
       };
 
       storageService.saveFiche(newFiche);
-      toast.success('Fiche générée avec succès !');
       navigate(`/dashboard/editor/${newFiche.id}`);
     } catch (error) {
       console.error("Erreur génération IA:", error);
-      toast.error("Une erreur est survenue lors de la génération.");
+      toast.dismiss(); // Supprimer le toast de chargement
+      toast.error("Erreur lors de la génération", {
+        description: error instanceof Error ? error.message : "Une erreur est survenue lors de la génération."
+      });
     } finally {
       setIsGenerating(false);
     }
@@ -105,7 +148,7 @@ export default function AIPrompt() {
         </Link>
       </div>
 
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="flex-1 flex flex-col"
@@ -118,7 +161,7 @@ export default function AIPrompt() {
         <div className="relative mb-6 group">
           <div className="absolute -inset-0.5 bg-gradient-to-r from-edu-red/0 via-edu-red/20 to-edu-red/0 rounded-[4px] blur opacity-0 group-focus-within:opacity-100 transition duration-500"></div>
           <div className="relative bg-[#F5F2ED] border border-edu-light/50 rounded-[4px] overflow-hidden flex flex-col shadow-inner">
-            <textarea 
+            <textarea
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               placeholder="Exemple : Créer une séquence sur la Révolution Française pour une classe de 4ème. La séance dure 2h. Je veux une analyse de texte, un travail de groupe sur les causes, et une évaluation formative à la fin."
@@ -139,7 +182,7 @@ export default function AIPrompt() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10">
           <div className="flex flex-col gap-1">
             <label className="text-[10px] uppercase tracking-widest text-edu-dark font-mono ml-1">Matière (Optionnel)</label>
-            <select 
+            <select
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
               className="w-full px-4 py-3 bg-white border border-edu-light/50 rounded-[2px] outline-none focus:border-edu-red transition-colors appearance-none text-sm"
@@ -156,7 +199,7 @@ export default function AIPrompt() {
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-[10px] uppercase tracking-widest text-edu-dark font-mono ml-1">Classe (Optionnel)</label>
-            <select 
+            <select
               value={grade}
               onChange={(e) => setGrade(e.target.value)}
               className="w-full px-4 py-3 bg-white border border-edu-light/50 rounded-[2px] outline-none focus:border-edu-red transition-colors appearance-none text-sm"
@@ -170,8 +213,8 @@ export default function AIPrompt() {
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-[10px] uppercase tracking-widest text-edu-dark font-mono ml-1">Durée (Optionnel)</label>
-            <input 
-              type="text" 
+            <input
+              type="text"
               placeholder="Ex: 2H"
               value={duration}
               onChange={(e) => setDuration(e.target.value)}
@@ -182,13 +225,13 @@ export default function AIPrompt() {
 
         {/* Actions */}
         <div className="flex flex-col-reverse sm:flex-row justify-between items-center gap-4 mb-12">
-          <Link 
-            to="/dashboard/create" 
+          <Link
+            to="/dashboard/create"
             className="w-full sm:w-auto px-6 py-3 border border-edu-dark text-edu-black rounded-[2px] hover:bg-edu-dark/5 transition-colors font-medium text-center"
           >
             Annuler
           </Link>
-          <button 
+          <button
             onClick={handleGenerate}
             disabled={isGenerating || !prompt.trim()}
             className="w-full sm:w-auto px-8 py-3 bg-edu-red text-white rounded-[2px] hover:bg-[#5a0808] transition-all shadow-[0_4px_14px_rgba(126,11,11,0.3)] font-medium flex items-center justify-center gap-3 disabled:opacity-70 disabled:cursor-not-allowed"
@@ -209,7 +252,7 @@ export default function AIPrompt() {
           <p className="text-xs font-serif italic text-edu-dark mb-3">Exemples rapides :</p>
           <div className="flex flex-wrap gap-2">
             {["La Révolution Française", "Théorème de Pythagore", "Analyse de Madame Bovary", "Loi d'Ohm"].map((ex, i) => (
-              <button 
+              <button
                 key={i}
                 onClick={() => setPrompt(`Créer une fiche sur : ${ex}`)}
                 className="text-xs bg-white border border-edu-light/50 text-edu-dark px-3 py-1.5 rounded-full hover:border-edu-red hover:text-edu-red transition-colors"

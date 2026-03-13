@@ -1,7 +1,7 @@
 // SheetEditor.tsx (corrigé)
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { 
+import {
   Bold, Italic, Underline, List, ListOrdered, Table as TableIcon, Image as ImageIcon, Sigma, Eye,
   Sparkles, Search, Maximize2, Target, FileText, HelpCircle, Wrench, BarChart,
   ChevronDown, Check, Download, Share2, Save, Plus, GripVertical, Trash2, Columns, Rows
@@ -50,18 +50,45 @@ interface FicheData {
   sequences: Sequence[];
   documentEleve: {
     title: string;
-    contenu: string;
-    schema: string | null;
-    formules: string[];
-    taches: string[];
+    contenu?: string;
+    schema?: string | null;
+    formules?: string[];
+    taches?: string[];
+    miseEnSituation?: {
+      texte: string;
+      contexte: string;
+    };
+    tache?: {
+      enonce: string;
+      objectif: string;
+    };
+    supportPedagogique?: {
+      titre: string;
+      contenu: string;
+    };
+    consignes?: string[];
   };
   synthese: {
     title: string;
-    content: string;
+    content?: string;
+    notionsPrincipales?: string[];
+    pointsCles?: string[];
+    ideesImportantes?: string;
+    resume?: string;
   };
   evaluation: {
     title: string;
-    content: string;
+    content?: string;
+    objectifEvaluation?: string;
+    questions?: Array<{
+      numero: number;
+      question: string;
+      typeQuestion: string;
+    }>;
+    critereEvaluation?: string[];
+    corrige?: {
+      reponsesAttendues: string[];
+    };
   };
   ficheSynthese: {
     title: string;
@@ -79,10 +106,10 @@ export default function SheetEditor() {
   const [showAIPanel, setShowAIPanel] = useState(false);
   const [aiPrompt, setAIPrompt] = useState('');
   const [isAIGenerating, setIsAIGenerating] = useState(false);
-  
+
   // Données de la fiche
   const [ficheData, setFicheData] = useState<FicheData | null>(null);
-  
+
   // Structure des sections
   const [sections, setSections] = useState<Section[]>([]);
 
@@ -93,10 +120,10 @@ export default function SheetEditor() {
       try {
         const allFiches = storageService.getFiches();
         const existingFiche = allFiches.find(f => f.id === id);
-        
+
         if (existingFiche && existingFiche.content) {
           setFicheData(existingFiche.content);
-          
+
           // Construire les sections à partir des données chargées
           const newSections: Section[] = [
             { id: 'en-tete', label: 'En-tête', type: 'main' },
@@ -154,7 +181,7 @@ export default function SheetEditor() {
             }
           };
           setFicheData(defaultData);
-          
+
           const initialSections: Section[] = [
             { id: 'en-tete', label: 'En-tête', type: 'main' },
             { id: 'situation', label: 'Mise en situation', type: 'main' },
@@ -199,7 +226,7 @@ export default function SheetEditor() {
     try {
       const allFiches = storageService.getFiches();
       const existingFiche = allFiches.find(f => f.id === ficheData.id);
-      
+
       const updatedFiche: Fiche = {
         id: ficheData.id,
         title: ficheData.titre,
@@ -215,7 +242,7 @@ export default function SheetEditor() {
 
       storageService.saveFiche(updatedFiche);
       setIsSaved(true);
-      
+
       // Si c'était une nouvelle fiche sans ID dans l'URL, on met à jour l'URL
       if (!id) {
         navigate(`/dashboard/editor/${ficheData.id}`, { replace: true });
@@ -233,7 +260,7 @@ export default function SheetEditor() {
 
   const updateFicheData = (path: string[], value: any) => {
     if (!ficheData) return;
-    
+
     // Mise à jour profonde de l'objet
     const newData = { ...ficheData };
     let current: any = newData;
@@ -241,7 +268,7 @@ export default function SheetEditor() {
       current = current[path[i]];
     }
     current[path[path.length - 1]] = value;
-    
+
     setFicheData(newData);
     setIsSaved(false);
   };
@@ -265,7 +292,7 @@ export default function SheetEditor() {
   // Supprimer une section
   const deleteSection = (sectionId: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    
+
     // Vérifier si ce sont des sections protégées
     const protectedSections = ['en-tete', 'situation', 'sequences', 'synthese', 'evaluation', 'document', 'fiche'];
     if (protectedSections.includes(sectionId)) {
@@ -279,12 +306,12 @@ export default function SheetEditor() {
     if (window.confirm('Êtes-vous sûr de vouloir supprimer cette section ?')) {
       setSections(sections.filter(s => s.id !== sectionId));
       setIsSaved(false);
-      
+
       // Si la section supprimée était active, activer la première section
       if (activeSection === sectionId) {
         setActiveSection(sections[0]?.id || '');
       }
-      
+
       toast.success('Section supprimée');
     }
   };
@@ -292,7 +319,7 @@ export default function SheetEditor() {
   // Ajouter une séquence
   const addSequence = () => {
     if (!ficheData) return;
-    
+
     const newSequence: Sequence = {
       id: `seq-${Date.now()}`,
       numero: String.fromCharCode(65 + ficheData.sequences.length), // A, B, C...
@@ -302,9 +329,9 @@ export default function SheetEditor() {
       savoirs: "Savoirs associés",
       duree: "10 min"
     };
-    
+
     updateFicheData(['sequences'], [...ficheData.sequences, newSequence]);
-    
+
     // Ajouter la sous-section dans le sommaire
     setSections([
       ...sections.slice(0, sections.findIndex(s => s.id === 'sequences') + 1),
@@ -321,7 +348,7 @@ export default function SheetEditor() {
   // Supprimer une séquence
   const deleteSequence = (sequenceId: string) => {
     if (!ficheData) return;
-    
+
     if (window.confirm('Supprimer cette séquence ?')) {
       updateFicheData(['sequences'], ficheData.sequences.filter(s => s.id !== sequenceId));
       setSections(sections.filter(s => s.id !== sequenceId));
@@ -367,7 +394,7 @@ export default function SheetEditor() {
       <div className="absolute inset-0 flex items-center justify-center bg-edu-bg">
         <div className="text-center">
           <p className="text-edu-dark mb-4">Fiche non trouvée</p>
-          <button 
+          <button
             onClick={() => navigate('/dashboard')}
             className="px-4 py-2 bg-edu-red text-white rounded-[2px] hover:bg-[#5a0808]"
           >
@@ -383,7 +410,7 @@ export default function SheetEditor() {
       {/* Header Premium */}
       <header className="flex-none h-16 bg-white border-b border-edu-light/50 flex items-center justify-between px-8 z-20 shadow-sm">
         <div className="flex items-center gap-6">
-          <button 
+          <button
             onClick={() => navigate('/dashboard/library')}
             className="p-2 hover:bg-edu-light/30 rounded-full transition-colors text-edu-dark"
           >
@@ -392,8 +419,8 @@ export default function SheetEditor() {
           <div className="h-8 w-[1px] bg-edu-light/50"></div>
           <div className="flex flex-col">
             <div className="flex items-center gap-3">
-              <input 
-                type="text" 
+              <input
+                type="text"
                 value={ficheData.titre}
                 onChange={(e) => {
                   updateFicheData(['titre'], e.target.value);
@@ -413,28 +440,27 @@ export default function SheetEditor() {
             </div>
           </div>
         </div>
-        
+
         <div className="flex items-center gap-4">
           <div className="flex items-center bg-edu-light/20 p-1 rounded-[4px] gap-1">
-            <button 
+            <button
               onClick={() => navigate(`/dashboard/preview/${id}`)}
               className="flex items-center gap-2 px-3 py-1.5 text-xs font-bold text-edu-dark hover:text-edu-black hover:bg-white rounded-[2px] transition-all"
             >
               <Eye size={14} /> APERÇU
             </button>
-            <button 
+            <button
               onClick={() => setShowAIPanel(!showAIPanel)}
-              className={`flex items-center gap-2 px-3 py-1.5 text-xs font-bold rounded-[2px] transition-all ${
-                showAIPanel ? 'bg-edu-red text-white' : 'text-edu-dark hover:text-edu-black hover:bg-white'
-              }`}
+              className={`flex items-center gap-2 px-3 py-1.5 text-xs font-bold rounded-[2px] transition-all ${showAIPanel ? 'bg-edu-red text-white' : 'text-edu-dark hover:text-edu-black hover:bg-white'
+                }`}
             >
               <Sparkles size={14} /> ASSISTANT AI
             </button>
           </div>
-          
+
           <div className="h-8 w-[1px] bg-edu-light/50 mx-2"></div>
-          
-          <button 
+
+          <button
             onClick={handleSave}
             className="flex items-center gap-2 px-6 py-2 text-xs font-bold bg-edu-black text-white hover:bg-edu-red rounded-[2px] transition-all shadow-lg active:scale-95"
           >
@@ -445,7 +471,7 @@ export default function SheetEditor() {
 
       {/* Main Content Area */}
       <div className="flex-1 flex overflow-hidden">
-        
+
         {/* Sidebar Navigation - Style "Table of Contents" */}
         <aside className="hidden xl:flex w-64 bg-white border-r border-edu-light/50 flex-col overflow-y-auto custom-scrollbar">
           <div className="p-8">
@@ -453,17 +479,16 @@ export default function SheetEditor() {
               <h3 className="text-[10px] font-bold text-edu-dark tracking-[0.2em] uppercase">Navigation</h3>
               <div className="w-8 h-[1px] bg-edu-red"></div>
             </div>
-            
+
             <nav className="space-y-1">
               {sections.map((section, idx) => (
                 <div key={section.id} className="relative">
-                  <button 
+                  <button
                     onClick={() => scrollToSection(section.id)}
-                    className={`w-full text-left flex items-center gap-4 px-4 py-3 rounded-[4px] transition-all group ${
-                      activeSection === section.id
-                        ? 'text-edu-red bg-edu-red/5' 
-                        : 'text-edu-dark hover:bg-edu-light/20'
-                    }`}
+                    className={`w-full text-left flex items-center gap-4 px-4 py-3 rounded-[4px] transition-all group ${activeSection === section.id
+                      ? 'text-edu-red bg-edu-red/5'
+                      : 'text-edu-dark hover:bg-edu-light/20'
+                      }`}
                   >
                     <span className={`text-[10px] font-mono opacity-40 ${activeSection === section.id ? 'opacity-100' : ''}`}>
                       {String(idx + 1).padStart(2, '0')}
@@ -471,9 +496,9 @@ export default function SheetEditor() {
                     <span className={`text-xs uppercase tracking-wider ${activeSection === section.id ? 'font-bold' : 'font-medium'}`}>
                       {section.label}
                     </span>
-                    
+
                     {activeSection === section.id && (
-                      <motion.div 
+                      <motion.div
                         layoutId="active-nav"
                         className="absolute left-0 w-1 h-6 bg-edu-red rounded-r-full"
                       />
@@ -484,7 +509,7 @@ export default function SheetEditor() {
             </nav>
 
             <div className="mt-12 pt-8 border-t border-edu-light/50">
-              <button 
+              <button
                 onClick={addNewSection}
                 className="w-full group flex items-center justify-between px-4 py-3 text-[10px] font-bold text-edu-dark hover:text-edu-red border border-dashed border-edu-dark/20 hover:border-edu-red/50 rounded-[4px] transition-all"
               >
@@ -502,14 +527,13 @@ export default function SheetEditor() {
             <div className="bg-white shadow-[0_20px_50px_rgba(0,0,0,0.08)] border border-edu-light/30 min-h-[1200px] relative overflow-hidden">
               {/* Decorative side line */}
               <div className="absolute left-0 top-0 bottom-0 w-1 bg-edu-red/10"></div>
-              
+
               <div className="p-16">
                 {/* En-tête */}
-                <div 
+                <div
                   id="en-tete"
-                  className={`relative group mb-12 p-6 transition-all border-2 ${
-                    activeSection === 'en-tete' ? 'border-edu-black bg-edu-light/5' : 'border-transparent hover:border-edu-light/50'
-                  }`}
+                  className={`relative group mb-12 p-6 transition-all border-2 ${activeSection === 'en-tete' ? 'border-edu-black bg-edu-light/5' : 'border-transparent hover:border-edu-light/50'
+                    }`}
                   onClick={() => setActiveSection('en-tete')}
                 >
                   <div className="absolute -left-12 top-0 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -519,8 +543,8 @@ export default function SheetEditor() {
                   <div className="grid grid-cols-2 gap-8 mb-8 border-b-2 border-edu-black pb-8">
                     <div className="space-y-2">
                       <label className="text-[10px] font-bold text-edu-dark uppercase tracking-widest">Matière</label>
-                      <input 
-                        type="text" 
+                      <input
+                        type="text"
                         value={ficheData.enTete?.matiere || ''}
                         onChange={(e) => updateFicheData(['enTete', 'matiere'], e.target.value)}
                         className="w-full bg-transparent border-b border-edu-light/50 focus:border-edu-red outline-none py-1 font-serif text-lg transition-colors"
@@ -528,8 +552,8 @@ export default function SheetEditor() {
                     </div>
                     <div className="space-y-2">
                       <label className="text-[10px] font-bold text-edu-dark uppercase tracking-widest">Classe / Niveau</label>
-                      <input 
-                        type="text" 
+                      <input
+                        type="text"
                         value={ficheData.enTete?.classe || ''}
                         onChange={(e) => updateFicheData(['enTete', 'classe'], e.target.value)}
                         className="w-full bg-transparent border-b border-edu-light/50 focus:border-edu-red outline-none py-1 font-serif text-lg transition-colors"
@@ -540,8 +564,8 @@ export default function SheetEditor() {
                   <div className="grid grid-cols-1 gap-8 mb-8 border-b-2 border-edu-black pb-8">
                     <div className="space-y-2">
                       <label className="text-[10px] font-bold text-edu-dark uppercase tracking-widest">Thème du cours</label>
-                      <input 
-                        type="text" 
+                      <input
+                        type="text"
                         value={ficheData.enTete?.theme || ''}
                         onChange={(e) => updateFicheData(['enTete', 'theme'], e.target.value)}
                         className="w-full bg-transparent border-b border-edu-light/50 focus:border-edu-red outline-none py-1 font-serif text-xl font-bold transition-colors"
@@ -552,8 +576,8 @@ export default function SheetEditor() {
                   <div className="grid grid-cols-3 gap-8">
                     <div className="space-y-2">
                       <label className="text-[10px] font-bold text-edu-dark uppercase tracking-widest">Durée estimée</label>
-                      <input 
-                        type="text" 
+                      <input
+                        type="text"
                         value={ficheData.enTete?.temps || ''}
                         onChange={(e) => updateFicheData(['enTete', 'temps'], e.target.value)}
                         className="w-full bg-transparent border-b border-edu-light/50 focus:border-edu-red outline-none py-1 text-sm transition-colors"
@@ -561,8 +585,8 @@ export default function SheetEditor() {
                     </div>
                     <div className="col-span-2 space-y-2">
                       <label className="text-[10px] font-bold text-edu-dark uppercase tracking-widest">Objectif global</label>
-                      <input 
-                        type="text" 
+                      <input
+                        type="text"
                         value={ficheData.enTete?.objectif || ''}
                         onChange={(e) => updateFicheData(['enTete', 'objectif'], e.target.value)}
                         className="w-full bg-transparent border-b border-edu-light/50 focus:border-edu-red outline-none py-1 text-sm italic transition-colors"
@@ -572,17 +596,16 @@ export default function SheetEditor() {
                 </div>
 
                 {/* Mise en situation */}
-                <div 
+                <div
                   id="situation"
-                  className={`relative group mb-16 p-6 transition-all border-2 ${
-                    activeSection === 'situation' ? 'border-edu-black bg-edu-light/5' : 'border-transparent hover:border-edu-light/50'
-                  }`}
+                  className={`relative group mb-16 p-6 transition-all border-2 ${activeSection === 'situation' ? 'border-edu-black bg-edu-light/5' : 'border-transparent hover:border-edu-light/50'
+                    }`}
                   onClick={() => setActiveSection('situation')}
                 >
                   <div className="absolute -left-12 top-0 opacity-0 group-hover:opacity-100 transition-opacity">
                     <div className="bg-edu-black text-white text-[10px] font-bold px-2 py-1 rotate-[-90deg] origin-right">SITUATION</div>
                   </div>
-                  
+
                   <h3 className="text-xs font-bold text-edu-black uppercase tracking-[0.2em] mb-8 flex items-center gap-4">
                     <span className="bg-edu-black text-white w-6 h-6 flex items-center justify-center text-[10px]">01</span>
                     MISE EN SITUATION
@@ -591,7 +614,7 @@ export default function SheetEditor() {
                   <div className="space-y-8">
                     <div className="space-y-2">
                       <label className="text-[10px] font-bold text-edu-dark uppercase tracking-widest">Rappel du cours précédent</label>
-                      <textarea 
+                      <textarea
                         value={ficheData.miseEnSituation.rappel}
                         onChange={(e) => updateFicheData(['miseEnSituation', 'rappel'], e.target.value)}
                         className="w-full bg-transparent border border-edu-light/50 focus:border-edu-red outline-none p-3 text-sm min-h-[80px] transition-colors"
@@ -601,7 +624,7 @@ export default function SheetEditor() {
 
                     <div className="space-y-2">
                       <label className="text-[10px] font-bold text-edu-dark uppercase tracking-widest">Motivation / Problématique</label>
-                      <textarea 
+                      <textarea
                         value={ficheData.miseEnSituation.motivation}
                         onChange={(e) => updateFicheData(['miseEnSituation', 'motivation'], e.target.value)}
                         className="w-full bg-transparent border border-edu-light/50 focus:border-edu-red outline-none p-3 text-sm min-h-[80px] transition-colors"
@@ -612,11 +635,10 @@ export default function SheetEditor() {
                 </div>
 
                 {/* Séquences */}
-                <div 
+                <div
                   id="sequences"
-                  className={`relative group mb-16 p-6 transition-all border-2 ${
-                    activeSection === 'sequences' ? 'border-edu-black bg-edu-light/5' : 'border-transparent hover:border-edu-light/50'
-                  }`}
+                  className={`relative group mb-16 p-6 transition-all border-2 ${activeSection === 'sequences' ? 'border-edu-black bg-edu-light/5' : 'border-transparent hover:border-edu-light/50'
+                    }`}
                   onClick={() => setActiveSection('sequences')}
                 >
                   <div className="absolute -left-12 top-0 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -628,7 +650,7 @@ export default function SheetEditor() {
                       <span className="bg-edu-black text-white w-6 h-6 flex items-center justify-center text-[10px]">02</span>
                       DÉROULEMENT PÉDAGOGIQUE
                     </h3>
-                    <button 
+                    <button
                       onClick={addSequence}
                       className="flex items-center gap-2 px-3 py-1.5 text-[10px] font-bold text-edu-red border border-edu-red/30 hover:bg-edu-red hover:text-white rounded-[2px] transition-all"
                     >
@@ -642,12 +664,12 @@ export default function SheetEditor() {
                         <div className="absolute -left-3 top-6 w-6 h-6 bg-white border border-edu-black flex items-center justify-center font-bold text-xs shadow-sm">
                           {seq.numero}
                         </div>
-                        
+
                         <div className="grid grid-cols-1 gap-6">
                           <div className="space-y-2">
                             <label className="text-[10px] font-bold text-edu-dark uppercase tracking-widest">Objectif opérationnel</label>
-                            <input 
-                              type="text" 
+                            <input
+                              type="text"
                               value={seq.objectif}
                               onChange={(e) => {
                                 const newSeqs = [...ficheData.sequences];
@@ -657,11 +679,11 @@ export default function SheetEditor() {
                               className="w-full bg-transparent border-b border-edu-light/50 focus:border-edu-red outline-none py-1 text-sm font-bold transition-colors"
                             />
                           </div>
-                          
+
                           <div className="grid grid-cols-2 gap-6">
                             <div className="space-y-2">
                               <label className="text-[10px] font-bold text-edu-dark uppercase tracking-widest">Activités / Tâches</label>
-                              <textarea 
+                              <textarea
                                 value={seq.taches}
                                 onChange={(e) => {
                                   const newSeqs = [...ficheData.sequences];
@@ -673,7 +695,7 @@ export default function SheetEditor() {
                             </div>
                             <div className="space-y-2">
                               <label className="text-[10px] font-bold text-edu-dark uppercase tracking-widest">Savoirs associés</label>
-                              <textarea 
+                              <textarea
                                 value={seq.savoirs}
                                 onChange={(e) => {
                                   const newSeqs = [...ficheData.sequences];
@@ -686,7 +708,7 @@ export default function SheetEditor() {
                           </div>
                         </div>
 
-                        <button 
+                        <button
                           onClick={() => {
                             const newSeqs = ficheData.sequences.filter(s => s.id !== seq.id);
                             updateFicheData(['sequences'], newSeqs);
@@ -702,36 +724,231 @@ export default function SheetEditor() {
 
                 {/* Synthèse & Évaluation */}
                 <div className="grid grid-cols-1 gap-16 mb-16">
-                  <div id="synthese" className="relative group p-6 border-2 border-transparent hover:border-edu-light/50 transition-all">
+                  <div id="synthese" className={`relative group p-6 border-2 transition-all ${activeSection === 'synthese' ? 'border-edu-black bg-edu-light/5' : 'border-transparent hover:border-edu-light/50'
+                    }`} onClick={() => setActiveSection('synthese')}>
                     <h3 className="text-xs font-bold text-edu-black uppercase tracking-[0.2em] mb-8 flex items-center gap-4">
                       <span className="bg-edu-black text-white w-6 h-6 flex items-center justify-center text-[10px]">03</span>
                       SYNTHÈSE DU COURS
                     </h3>
-                    <RichTextEditor 
-                      content={ficheData.synthese.content}
-                      onChange={(html) => updateFicheData(['synthese', 'content'], html)}
-                    />
+
+                    {/* Afficher les notions principales si disponibles */}
+                    {ficheData.synthese.notionsPrincipales && ficheData.synthese.notionsPrincipales.length > 0 && (
+                      <div className="mb-8">
+                        <h4 className="text-[10px] font-bold text-edu-dark uppercase tracking-widest mb-4">Notions principales</h4>
+                        <div className="flex flex-wrap gap-2">
+                          {ficheData.synthese.notionsPrincipales.map((notion, i) => (
+                            <span key={i} className="bg-edu-red/10 text-edu-red px-3 py-1.5 text-[11px] font-semibold rounded-full">
+                              {notion}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Afficher les points clés si disponibles */}
+                    {ficheData.synthese.pointsCles && ficheData.synthese.pointsCles.length > 0 && (
+                      <div className="mb-8">
+                        <h4 className="text-[10px] font-bold text-edu-dark uppercase tracking-widest mb-4">Points clés à retenir</h4>
+                        <ul className="space-y-2">
+                          {ficheData.synthese.pointsCles.map((point, i) => (
+                            <li key={i} className="flex gap-3 text-sm text-edu-black">
+                              <span className="text-edu-red font-bold">✓</span>
+                              <span>{point}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* Afficher les idées importantes si disponibles */}
+                    {ficheData.synthese.ideesImportantes && (
+                      <div className="mb-8">
+                        <h4 className="text-[10px] font-bold text-edu-dark uppercase tracking-widest mb-4">Idées importantes</h4>
+                        <p className="text-sm text-edu-black leading-relaxed">{ficheData.synthese.ideesImportantes}</p>
+                      </div>
+                    )}
+
+                    {/* Contenu éditable additionnelle */}
+                    {ficheData.synthese.content && (
+                      <div className="border-t border-edu-light/50 pt-6">
+                        <h4 className="text-[10px] font-bold text-edu-dark uppercase tracking-widest mb-4">Contenu détaillé</h4>
+                        <RichTextEditor
+                          content={ficheData.synthese.content}
+                          onChange={(html) => updateFicheData(['synthese', 'content'], html)}
+                        />
+                      </div>
+                    )}
                   </div>
 
-                  <div id="evaluation" className="relative group p-6 border-2 border-transparent hover:border-edu-light/50 transition-all">
+                  <div id="evaluation" className={`relative group p-6 border-2 transition-all ${activeSection === 'evaluation' ? 'border-edu-black bg-edu-light/5' : 'border-transparent hover:border-edu-light/50'
+                    }`} onClick={() => setActiveSection('evaluation')}>
                     <h3 className="text-xs font-bold text-edu-black uppercase tracking-[0.2em] mb-8 flex items-center gap-4">
                       <span className="bg-edu-black text-white w-6 h-6 flex items-center justify-center text-[10px]">04</span>
                       ÉVALUATION FORMATIVE
                     </h3>
-                    <RichTextEditor 
-                      content={ficheData.evaluation.content}
-                      onChange={(html) => updateFicheData(['evaluation', 'content'], html)}
-                    />
+
+                    {/* Afficher l'objectif d'évaluation si disponible */}
+                    {ficheData.evaluation.objectifEvaluation && (
+                      <div className="mb-8 p-4 bg-edu-light/20 border border-edu-light/50 rounded-[4px]">
+                        <h4 className="text-[10px] font-bold text-edu-dark uppercase tracking-widest mb-2">Objectif</h4>
+                        <p className="text-sm text-edu-black">{ficheData.evaluation.objectifEvaluation}</p>
+                      </div>
+                    )}
+
+                    {/* Afficher les questions si disponibles */}
+                    {ficheData.evaluation.questions && ficheData.evaluation.questions.length > 0 && (
+                      <div className="mb-8">
+                        <h4 className="text-[10px] font-bold text-edu-dark uppercase tracking-widest mb-4">Questions</h4>
+                        <div className="space-y-4">
+                          {ficheData.evaluation.questions.map((q, i) => (
+                            <div key={i} className="border border-edu-light/50 p-4 rounded-[2px]">
+                              <div className="flex items-start gap-3 mb-2">
+                                <span className="bg-edu-black text-white w-6 h-6 min-w-6 flex items-center justify-center text-[10px] font-bold rounded-full">{q.numero}</span>
+                                <div className="flex-1">
+                                  <p className="text-sm text-edu-black font-semibold">{q.question}</p>
+                                  <p className="text-[10px] text-edu-dark mt-1 italic">Type: {q.typeQuestion}</p>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Afficher les critères d'évaluation si disponibles */}
+                    {ficheData.evaluation.critereEvaluation && ficheData.evaluation.critereEvaluation.length > 0 && (
+                      <div className="mb-8">
+                        <h4 className="text-[10px] font-bold text-edu-dark uppercase tracking-widest mb-4">Critères d'évaluation</h4>
+                        <ul className="space-y-2">
+                          {ficheData.evaluation.critereEvaluation.map((crit, i) => (
+                            <li key={i} className="flex gap-3 text-sm text-edu-black">
+                              <span className="text-edu-red font-bold">●</span>
+                              <span>{crit}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* Afficher les réponses attendues si disponibles */}
+                    {ficheData.evaluation.corrige?.reponsesAttendues && ficheData.evaluation.corrige.reponsesAttendues.length > 0 && (
+                      <div className="mb-8 p-4 bg-edu-red/5 border border-edu-red/30 rounded-[4px]">
+                        <h4 className="text-[10px] font-bold text-edu-red uppercase tracking-widest mb-4">Réponses attendues / Corrigé</h4>
+                        <div className="space-y-3">
+                          {ficheData.evaluation.corrige.reponsesAttendues.map((rep, i) => (
+                            <div key={i} className="text-sm text-edu-black">
+                              <span className="font-semibold text-edu-red">Q{i + 1}: </span>
+                              <span>{rep}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Contenu éditable additionnel */}
+                    {ficheData.evaluation.content && (
+                      <div className="border-t border-edu-light/50 pt-6">
+                        <h4 className="text-[10px] font-bold text-edu-dark uppercase tracking-widest mb-4">Contenu supplémentaire</h4>
+                        <RichTextEditor
+                          content={ficheData.evaluation.content}
+                          onChange={(html) => updateFicheData(['evaluation', 'content'], html)}
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Document Élève */}
+                <div id="document" className={`relative group mb-16 p-6 border-2 transition-all ${activeSection === 'document' ? 'border-edu-black bg-edu-light/5' : 'border-transparent hover:border-edu-light/50'
+                  }`} onClick={() => setActiveSection('document')}>
+                  <h3 className="text-xs font-bold text-edu-black uppercase tracking-[0.2em] mb-8 flex items-center gap-4">
+                    <span className="bg-edu-black text-white w-6 h-6 flex items-center justify-center text-[10px]">05</span>
+                    DOCUMENT ÉLÈVE
+                  </h3>
+
+                  <div className="space-y-12">
+                    {/* Mise en situation */}
+                    {ficheData.documentEleve && (
+                      <>
+                        {ficheData.documentEleve.miseEnSituation && (
+                          <div className="border-l-4 border-edu-red pl-6">
+                            <h4 className="text-xs font-bold text-edu-black uppercase tracking-widest mb-4">Mise en situation</h4>
+                            {ficheData.documentEleve.miseEnSituation.contexte && (
+                              <div className="mb-4">
+                                <p className="text-[10px] font-bold text-edu-dark uppercase tracking-widest mb-2">Contexte</p>
+                                <p className="text-sm text-edu-black leading-relaxed">{ficheData.documentEleve.miseEnSituation.contexte}</p>
+                              </div>
+                            )}
+                            {ficheData.documentEleve.miseEnSituation.texte && (
+                              <div>
+                                <p className="text-[10px] font-bold text-edu-dark uppercase tracking-widest mb-2">Texte de mise en situation</p>
+                                <p className="text-sm text-edu-black leading-relaxed bg-white p-4 border border-edu-light/50 rounded-[2px]">{ficheData.documentEleve.miseEnSituation.texte}</p>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Tâche */}
+                        {ficheData.documentEleve.tache && (
+                          <div className="border-l-4 border-edu-red pl-6">
+                            <h4 className="text-xs font-bold text-edu-black uppercase tracking-widest mb-4">Tâche à réaliser</h4>
+                            {ficheData.documentEleve.tache.enonce && (
+                              <div className="mb-4 p-4 bg-edu-red/5 border border-edu-red/30 rounded-[2px]">
+                                <p className="text-[10px] font-bold text-edu-red uppercase tracking-widest mb-2">Énoncé</p>
+                                <p className="text-base font-semibold text-edu-black">{ficheData.documentEleve.tache.enonce}</p>
+                              </div>
+                            )}
+                            {ficheData.documentEleve.tache.objectif && (
+                              <div>
+                                <p className="text-[10px] font-bold text-edu-dark uppercase tracking-widest mb-2">Objectif</p>
+                                <p className="text-sm text-edu-black">{ficheData.documentEleve.tache.objectif}</p>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Support pédagogique */}
+                        {ficheData.documentEleve.supportPedagogique && (
+                          <div className="border-l-4 border-edu-red pl-6">
+                            <h4 className="text-xs font-bold text-edu-black uppercase tracking-widest mb-4">Support pédagogique</h4>
+                            {ficheData.documentEleve.supportPedagogique.titre && (
+                              <h5 className="text-sm font-bold text-edu-black mb-3">{ficheData.documentEleve.supportPedagogique.titre}</h5>
+                            )}
+                            {ficheData.documentEleve.supportPedagogique.contenu && (
+                              <div className="bg-white p-6 border border-edu-light/50 rounded-[2px] text-sm text-edu-black leading-relaxed whitespace-pre-wrap">
+                                {ficheData.documentEleve.supportPedagogique.contenu}
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Consignes */}
+                        {ficheData.documentEleve.consignes && Array.isArray(ficheData.documentEleve.consignes) && ficheData.documentEleve.consignes.length > 0 && (
+                          <div className="border-l-4 border-edu-red pl-6">
+                            <h4 className="text-xs font-bold text-edu-black uppercase tracking-widest mb-4">Consignes</h4>
+                            <ol className="space-y-3">
+                              {ficheData.documentEleve.consignes.map((consigne, i) => (
+                                <li key={i} className="flex gap-4 text-sm text-edu-black">
+                                  <span className="bg-edu-black text-white w-6 h-6 min-w-6 flex items-center justify-center text-[10px] font-bold rounded-full">{i + 1}</span>
+                                  <span className="pt-0.5">{consigne}</span>
+                                </li>
+                              ))}
+                            </ol>
+                          </div>
+                        )}
+                      </>
+                    )}
                   </div>
                 </div>
 
                 {/* Fiche de synthèse finale */}
-                <div id="fiche" className="relative group p-6 border-2 border-edu-red/20 bg-edu-red/[0.02] transition-all">
+                <div id="fiche" className={`relative group p-6 border-2 transition-all ${activeSection === 'fiche' ? 'border-edu-red/50 bg-edu-red/[0.02]' : 'border-edu-red/20 bg-edu-red/[0.02]'
+                  }`} onClick={() => setActiveSection('fiche')}>
                   <h3 className="text-xs font-bold text-edu-red uppercase tracking-[0.2em] mb-8 flex items-center gap-4">
-                    <span className="bg-edu-red text-white w-6 h-6 flex items-center justify-center text-[10px]">05</span>
+                    <span className="bg-edu-red text-white w-6 h-6 flex items-center justify-center text-[10px]">06</span>
                     FICHE DE SYNTHÈSE (CORRIGÉ)
                   </h3>
-                  <RichTextEditor 
+                  <RichTextEditor
                     content={ficheData.ficheSynthese.content}
                     onChange={(html) => updateFicheData(['ficheSynthese', 'content'], html)}
                   />
@@ -744,7 +961,7 @@ export default function SheetEditor() {
         {/* AI Assistant Slide-out Panel */}
         <AnimatePresence>
           {showAIPanel && (
-            <motion.aside 
+            <motion.aside
               initial={{ x: 400 }}
               animate={{ x: 0 }}
               exit={{ x: 400 }}
@@ -756,14 +973,14 @@ export default function SheetEditor() {
                   <Sparkles size={20} className="text-edu-red" />
                   <h3 className="text-xs font-bold uppercase tracking-widest">Assistant IA Premium</h3>
                 </div>
-                <button 
+                <button
                   onClick={() => setShowAIPanel(false)}
                   className="p-1 hover:bg-white/10 rounded-full transition-colors"
                 >
                   <ChevronDown className="-rotate-90" size={20} />
                 </button>
               </div>
-              
+
               <div className="flex-1 overflow-y-auto p-6 custom-scrollbar space-y-8">
                 <div className="space-y-4">
                   <h4 className="text-[10px] font-bold text-edu-dark uppercase tracking-widest">Action rapide</h4>
@@ -784,13 +1001,13 @@ export default function SheetEditor() {
                 <div className="space-y-4">
                   <h4 className="text-[10px] font-bold text-edu-dark uppercase tracking-widest">Demande personnalisée</h4>
                   <div className="relative">
-                    <textarea 
+                    <textarea
                       value={aiPrompt}
                       onChange={(e) => setAIPrompt(e.target.value)}
                       placeholder="Ex: Génère 3 questions d'évaluation pour cette section..."
                       className="w-full bg-edu-light/10 border border-edu-light/50 focus:border-edu-red outline-none p-4 text-xs min-h-[120px] rounded-[4px] transition-all"
                     />
-                    <button 
+                    <button
                       className="absolute bottom-3 right-3 p-2 bg-edu-black text-white rounded-[4px] hover:bg-edu-red transition-all"
                       disabled={!aiPrompt || isAIGenerating}
                     >

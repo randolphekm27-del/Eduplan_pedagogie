@@ -74,7 +74,7 @@ export default function Pricing() {
               <li className="flex items-start gap-3 text-edu-dark/50"><X size={20} className="shrink-0" /> <span>Formules mathématiques avancées</span></li>
               <li className="flex items-start gap-3 text-edu-dark/50"><X size={20} className="shrink-0" /> <span>Export Word/LaTeX</span></li>
             </ul>
-            <Link to="/auth" className="block w-full py-3 px-4 border border-edu-light text-edu-black text-center font-medium rounded-[2px] hover:bg-edu-light/20 transition-colors">
+            <Link to="/signup" className="block w-full py-3 px-4 border border-edu-light text-edu-black text-center font-medium rounded-[2px] hover:bg-edu-light/20 transition-colors">
               Commencer
             </Link>
           </motion.div>
@@ -102,7 +102,7 @@ export default function Pricing() {
               <li className="flex items-start gap-3 text-white"><Check size={20} className="text-edu-red shrink-0" /> <span>Bibliothèque de schémas techniques</span></li>
               <li className="flex items-start gap-3 text-white"><Check size={20} className="text-edu-red shrink-0" /> <span>Collaboration (5 collègues)</span></li>
             </ul>
-            <Link to="/auth" className="block w-full py-3 px-4 bg-edu-red text-white text-center font-medium rounded-[2px] hover:bg-[#5a0808] transition-colors shadow-md">
+            <Link to="/signup" className="block w-full py-3 px-4 bg-edu-red text-white text-center font-medium rounded-[2px] hover:bg-[#5a0808] transition-colors shadow-md">
               Choisir Pro
             </Link>
           </motion.div>

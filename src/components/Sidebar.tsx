@@ -1,8 +1,9 @@
 import React from 'react';
 import { BookOpen, Settings, FileText, Sparkles, PlusSquare, GraduationCap, FolderKanban, X, Library as LibraryIcon, LogOut } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
+import { useAuth } from '../context/AuthContext';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -12,6 +13,7 @@ interface SidebarProps {
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
+  const { logout, profile } = useAuth();
   
   const isActive = (path: string) => {
     return location.pathname === path;
@@ -25,9 +27,14 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
     if (window.innerWidth < 1024) onClose();
   };
 
-  const handleLogout = () => {
-    toast.success('Déconnexion réussie');
-    navigate('/');
+  const handleLogout = async () => {
+    try {
+      await logout();
+      toast.success('Déconnexion réussie');
+      navigate('/');
+    } catch (error) {
+      toast.error('Erreur lors de la déconnexion');
+    }
   };
 
   return (
@@ -102,11 +109,15 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           <div className="mt-4 px-4 flex items-center justify-between">
             <Link to="/dashboard/profile" onClick={onClose} className="flex items-center gap-3">
               <div className="w-10 h-10 lg:w-8 lg:h-8 rounded-full bg-edu-black/40 border border-edu-light/30 flex items-center justify-center font-serif text-sm">
-                PR
+                {profile?.firstname?.charAt(0) || 'U'}{profile?.lastname?.charAt(0) || ''}
               </div>
               <div className="flex flex-col">
-                <span className="text-sm lg:text-xs font-medium">Prof. R.</span>
-                <span className="text-[10px] font-mono opacity-60">Lycée Technique</span>
+                <span className="text-sm lg:text-xs font-medium truncate max-w-[120px]">
+                  {profile ? `${profile.firstname} ${profile.lastname.charAt(0)}.` : 'Chargement...'}
+                </span>
+                <span className="text-[10px] font-mono opacity-60 uppercase">
+                  {profile?.role === 'teacher' ? 'Enseignant' : profile?.role || 'Utilisateur'}
+                </span>
               </div>
             </Link>
             <button onClick={handleLogout} className="p-2 text-edu-bg/70 hover:text-edu-red hover:bg-edu-black/10 rounded-[2px] transition-colors" title="Se déconnecter">
