@@ -1,7 +1,11 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.VITE_SUPABASE_URL || '';
-const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY || '';
+const supabaseUrl = (import.meta as any).env.VITE_SUPABASE_URL || '';
+const supabaseAnonKey = (import.meta as any).env.VITE_SUPABASE_ANON_KEY || '';
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error("Supabase configuration missing! Check your .env file.");
+}
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
@@ -190,7 +194,7 @@ export const supabaseService = {
     resetPassword: async (email: string) => {
         try {
             const { error } = await supabase.auth.resetPasswordForEmail(email, {
-                redirectTo: `${process.env.VITE_APP_URL}/reset-password`,
+                redirectTo: `${(import.meta as any).env.VITE_APP_URL}/reset-password`,
             });
 
             if (error) throw error;

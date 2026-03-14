@@ -24,9 +24,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [session, setSession] = useState<Session | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-
     const loadUserProfile = async (userId: string) => {
         try {
+            console.log("Loading profile for user:", userId);
             const { data: profileData, error: profileError } = await supabase
                 .from("user_profiles")
                 .select("*")
@@ -34,73 +34,90 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 .single();
 
             if (profileError) {
-                console.warn("Profile load error:", profileError);
+                console.error("Profile load error:", profileError);
+                setProfile(null);
                 return;
             }
+            console.log("Profile loaded successfully:", profileData);
             setProfile(profileData as UserProfile);
         } catch (err) {
-            console.warn("Error loading profile:", err);
+            console.error("Critical error loading profile:", err);
+            setProfile(null);
         }
     };
 
     useEffect(() => {
+        let isMounted = true;
+
         const initializeAuth = async () => {
             try {
+                if (!isMounted) return;
+                console.log("AuthProvider: Initializing...");
                 setLoading(true);
                 
-                if (!process.env.VITE_SUPABASE_URL || !process.env.VITE_SUPABASE_ANON_KEY) {
-                    console.warn("Supabase not configured");
-                    setLoading(false);
-                    return;
-                }
-
-                const { data: dataSession, error: sessionError } = await supabase.auth.getSession();
+                const { data: { session: currentSession }, error: sessionError } = await supabase.auth.getSession();
                 
                 if (sessionError) {
-                    console.warn("Session error:", sessionError);
-                    setLoading(false);
+                    console.error("AuthProvider: Session fetch error:", sessionError);
+                    if (isMounted) setLoading(false);
                     return;
                 }
                 
-                const existingSession = dataSession?.session;
-                setSession(existingSession);
-
-                if (existingSession?.user) {
-                    setUser(existingSession.user);
-                    await loadUserProfile(existingSession.user.id);
+                if (currentSession && isMounted) {
+                    console.log("AuthProvider: Found existing session for", currentSession.user.email);
+                    setSession(currentSession);
+                    setUser(currentSession.user);
+                    await loadUserProfile(currentSession.user.id);
+                } else {
+                    console.log("AuthProvider: No active session found.");
+                    if (isMounted) {
+                        setSession(null);
+                        setUser(null);
+                        setProfile(null);
+                    }
                 }
             } catch (err) {
-                console.error("Auth init error:", err);
+                console.error("AuthProvider: Critical initialization error:", err);
             } finally {
-                setLoading(false);
+                if (isMounted) {
+                    setLoading(false);
+                    console.log("AuthProvider: Initialization process finished.");
+                }
             }
         };
 
         initializeAuth();
 
         const { data: authData } = supabase.auth.onAuthStateChange(
-            async (_event, newSession) => {
+            async (event, newSession) => {
+                if (!isMounted) return;
+                console.log("AuthProvider: Event", event);
+                
                 setSession(newSession);
 
                 if (newSession?.user) {
                     setUser(newSession.user);
                     await loadUserProfile(newSession.user.id);
-                    try {
-                        await supabase
-                            .from("user_profiles")
-                            .update({ last_login: new Date().toISOString() })
-                            .eq("id", newSession.user.id);
-                    } catch (err) {
-                        console.warn("Could not update last_login:", err);
-                    }
+                    // Mise à jour silencieuse du dernier accès
+                    supabase.from("user_profiles")
+                        .update({ last_login: new Date().toISOString() })
+                        .eq("id", newSession.user.id)
+                        .then(({ error }) => {
+                            if (error) console.warn("AuthProvider: Could not update last_login:", error);
+                        });
                 } else {
                     setUser(null);
                     setProfile(null);
                 }
+                
+                if (isMounted) setLoading(false);
             }
         );
 
-        return () => authData?.subscription?.unsubscribe();
+        return () => {
+            isMounted = false;
+            authData?.subscription?.unsubscribe();
+        };
     }, []);
 
     const login = async (email: string, password: string) => {

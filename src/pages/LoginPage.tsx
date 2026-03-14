@@ -21,12 +21,19 @@ export default function LoginPage() {
 
         setIsLoading(true);
         try {
+            console.log('LoginPage: Attempting login for', email);
             await login(email, password);
+            
             toast.success('Connecté avec succès!', {
                 description: `Bienvenue ${email}`
             });
-            console.log('Connexion réussie via AuthContext, redirection vers /dashboard');
-            navigate('/dashboard');
+            
+            console.log('LoginPage: Login successful, waiting for redirection...');
+            // Un petit délai permet aux états du contexte de se stabiliser
+            setTimeout(() => {
+                console.log('LoginPage: Navigating to /dashboard');
+                navigate('/dashboard', { replace: true });
+            }, 100);
         } catch (error) {
             console.error('Login error:', error);
             toast.error('Erreur de connexion', {

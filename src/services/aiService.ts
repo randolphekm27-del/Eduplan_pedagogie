@@ -1,7 +1,7 @@
 import { GoogleGenAI, Type } from "@google/genai";
 
 // Initialisation de l'IA avec la clé d'API fournie par l'environnement
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
+const ai = new GoogleGenAI({ apiKey: (import.meta as any).env.GEMINI_API_KEY || "" });
 
 export interface GeneratedSheet {
   titre: string;

@@ -13,17 +13,28 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 }) => {
     const { user, profile, loading } = useAuth();
 
-    // Afficher un loader pendant le chargement
+    // Afficher un loader uniquement pendant le chargement initial du contexte
     if (loading) {
         return (
-            <div className="flex items-center justify-center h-screen">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+            <div className="flex items-center justify-center h-screen bg-edu-bg">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-edu-red"></div>
+                    <p className="text-edu-black/60 font-medium">Chargement de votre session...</p>
+                </div>
             </div>
         );
     }
 
-    // Rediriger vers login si pas connecté
-    if (!user || !profile) {
+    // Rediriger vers login si pas connecté (et qu'on ne charge plus)
+    if (!user) {
+        console.log("ProtectedRoute: No user found, redirecting to /login");
+        return <Navigate to="/login" replace />;
+    }
+
+    // Si on a un user mais vraiment pas de profil après chargement, c'est un problème d'inscription
+    if (!profile) {
+        console.warn("ProtectedRoute: User logged in but no profile found.");
+        // On pourrait rediriger vers une page de complétion de profil ici
         return <Navigate to="/login" replace />;
     }
 
