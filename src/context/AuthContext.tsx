@@ -27,22 +27,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const loadUserProfile = async (userId: string) => {
         try {
             console.log("Loading profile for user:", userId);
-            const { data: profileData, error: profileError } = await supabase
+
+            const profileQuery = supabase
                 .from("user_profiles")
                 .select("*")
                 .eq("id", userId)
                 .single();
 
+            const timeout = new Promise((_, reject) =>
+                setTimeout(() => reject(new Error('Profile load timeout')), 7000)
+            );
+
+            const result = await Promise.race([profileQuery, timeout]) as any;
+            const profileData = result?.data;
+            const profileError = result?.error;
+
             if (profileError) {
-                console.error("Profile load error:", profileError);
+                console.warn("Profile load returned error:", profileError);
                 setProfile(null);
-                return;
+                return null;
             }
+
+            if (!profileData) {
+                console.warn("Profile load: no data returned");
+                setProfile(null);
+                return null;
+            }
+
             console.log("Profile loaded successfully:", profileData);
             setProfile(profileData as UserProfile);
+            return profileData as UserProfile;
         } catch (err) {
             console.error("Critical error loading profile:", err);
             setProfile(null);
+            return null;
         }
     };
 
@@ -54,15 +72,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 if (!isMounted) return;
                 console.log("AuthProvider: Initializing...");
                 setLoading(true);
-                
+
                 const { data: { session: currentSession }, error: sessionError } = await supabase.auth.getSession();
-                
+
                 if (sessionError) {
                     console.error("AuthProvider: Session fetch error:", sessionError);
                     if (isMounted) setLoading(false);
                     return;
                 }
-                
+
                 if (currentSession && isMounted) {
                     console.log("AuthProvider: Found existing session for", currentSession.user.email);
                     setSession(currentSession);
@@ -88,17 +106,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         initializeAuth();
 
-        const { data: authData } = supabase.auth.onAuthStateChange(
-            async (event, newSession) => {
+        // Prevent multiple subscriptions (useRef stores unsubscribe)
+        const authSubRef = { unsubscribe: undefined as any };
+        const subscribe = () => {
+            // Clean previous if any
+            if (authSubRef.unsubscribe) {
+                try { authSubRef.unsubscribe(); } catch (e) { /* ignore */ }
+                authSubRef.unsubscribe = undefined;
+            }
+
+            const { data: authData } = supabase.auth.onAuthStateChange((event, newSession) => {
                 if (!isMounted) return;
                 console.log("AuthProvider: Event", event);
-                
+
+                // set session immediately
                 setSession(newSession);
 
                 if (newSession?.user) {
                     setUser(newSession.user);
-                    await loadUserProfile(newSession.user.id);
-                    // Mise à jour silencieuse du dernier accès
+                    // Non-blocking profile load
+                    loadUserProfile(newSession.user.id).catch((err) => console.error('onAuthStateChange: loadUserProfile', err));
+
+                    // Silent last_login update
                     supabase.from("user_profiles")
                         .update({ last_login: new Date().toISOString() })
                         .eq("id", newSession.user.id)
@@ -109,30 +138,42 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     setUser(null);
                     setProfile(null);
                 }
-                
+
                 if (isMounted) setLoading(false);
-            }
-        );
+            });
+
+            authSubRef.unsubscribe = authData?.subscription?.unsubscribe;
+            return authSubRef;
+        };
+
+        const sub = subscribe();
 
         return () => {
             isMounted = false;
-            authData?.subscription?.unsubscribe();
+            try {
+                if (sub && typeof sub.unsubscribe === 'function') sub.unsubscribe();
+            } catch (e) {
+                /* ignore unsubscribe errors */
+            }
         };
     }, []);
 
     const login = async (email: string, password: string) => {
         try {
             setError(null);
-            const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({
-                email,
-                password,
-            });
+
+            // Protect against hanging requests with a timeout
+            const signInPromise = supabase.auth.signInWithPassword({ email, password });
+            const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('Login timeout')), 10000));
+
+            const { data: loginData, error: loginError } = await Promise.race([signInPromise, timeout]) as any;
 
             if (loginError) throw loginError;
 
             if (loginData?.user) {
                 setUser(loginData.user);
                 setSession(loginData.session);
+                // On attend le profil pour garantir la cohérence avant la redirection vers /dashboard
                 await loadUserProfile(loginData.user.id);
             }
         } catch (err) {
@@ -166,6 +207,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             if (signupError) throw signupError;
 
             if (signupData?.user) {
+                console.log("AuthProvider: Signup successful, creating user_profiles record...");
                 const { error: profileError } = await supabase
                     .from("user_profiles")
                     .insert([
@@ -178,10 +220,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                         },
                     ]);
 
-                if (profileError) console.warn("Profile creation warning:", profileError);
+                if (profileError) {
+                    console.error("AuthProvider: Profile creation error:", profileError);
+                } else {
+                    console.log("AuthProvider: user_profiles record created successfully.");
+                }
 
                 setUser(signupData.user);
                 setSession(signupData.session);
+                // On attend le chargement effectif du profil
                 await loadUserProfile(signupData.user.id);
             }
         } catch (err) {

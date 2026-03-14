@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
-import { 
-  User, 
-  Bell, 
-  Shield, 
-  CreditCard, 
-  Globe, 
-  Mail, 
-  Lock, 
-  Smartphone, 
-  Check, 
+import {
+  User,
+  Bell,
+  Shield,
+  CreditCard,
+  Globe,
+  Mail,
+  Lock,
+  Smartphone,
+  Check,
   ChevronRight,
   ExternalLink,
   Save,
@@ -57,11 +57,10 @@ export default function Settings() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-3 px-4 py-3 rounded-[2px] text-sm font-medium transition-all whitespace-nowrap ${
-                  activeTab === tab.id 
-                    ? 'bg-white text-edu-red shadow-sm border-l-2 border-edu-red' 
+                className={`flex items-center gap-3 px-4 py-3 rounded-[2px] text-sm font-medium transition-all whitespace-nowrap ${activeTab === tab.id
+                    ? 'bg-white text-edu-red shadow-sm border-l-2 border-edu-red'
                     : 'text-edu-dark hover:text-edu-black hover:bg-white/50'
-                }`}
+                  }`}
               >
                 <tab.icon size={18} strokeWidth={1.5} />
                 {tab.label}
@@ -122,7 +121,7 @@ export default function Settings() {
                 </div>
 
                 <div className="mt-10 pt-6 border-t border-edu-light/20 flex justify-end">
-                  <button 
+                  <button
                     onClick={handleSave}
                     disabled={isSaving}
                     className="flex items-center gap-2 bg-edu-black text-white px-8 py-2.5 rounded-[2px] font-medium hover:bg-edu-red transition-all shadow-lg disabled:opacity-50"
@@ -137,7 +136,7 @@ export default function Settings() {
             {activeTab === 'preferences' && (
               <div className="p-8">
                 <h3 className="font-serif text-xl text-edu-black mb-8">Préférences de l'application</h3>
-                
+
                 <div className="space-y-8">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
@@ -194,7 +193,7 @@ export default function Settings() {
             {activeTab === 'notifications' && (
               <div className="p-8">
                 <h3 className="font-serif text-xl text-edu-black mb-8">Gérer vos alertes</h3>
-                
+
                 <div className="space-y-6">
                   {[
                     { title: 'Nouveaux modèles', desc: 'Recevez une notification quand de nouveaux modèles pédagogiques sont ajoutés.' },
@@ -221,7 +220,7 @@ export default function Settings() {
             {activeTab === 'security' && (
               <div className="p-8">
                 <h3 className="font-serif text-xl text-edu-black mb-8">Sécurité du compte</h3>
-                
+
                 <div className="space-y-8">
                   <div className="flex items-center justify-between p-4 bg-edu-bg/30 border border-edu-light/20 rounded-[2px]">
                     <div className="flex items-center gap-4">
@@ -288,7 +287,7 @@ export default function Settings() {
                     </div>
                     <button className="px-4 py-2 bg-edu-black text-white text-xs font-bold uppercase tracking-widest rounded-[2px] hover:bg-edu-red transition-all">Changer de plan</button>
                   </div>
-                  
+
                   <div className="space-y-3">
                     <div className="flex items-center gap-2 text-xs text-edu-black">
                       <Check size={14} className="text-green-600" /> Générations IA illimitées
