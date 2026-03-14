@@ -6,10 +6,18 @@ import { useAuth } from '../context/AuthContext';
 
 export default function LoginPage() {
     const navigate = useNavigate();
-    const { login } = useAuth();
+    const { login, user, profile, loading } = useAuth();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+
+    // Redirection automatique si déjà connecté
+    React.useEffect(() => {
+        if (!loading && user && profile) {
+            console.log('LoginPage: User already authenticated, redirecting to /dashboard');
+            navigate('/dashboard', { replace: true });
+        }
+    }, [user, profile, loading, navigate]);
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();

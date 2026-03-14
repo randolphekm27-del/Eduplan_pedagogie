@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import DashboardLayout from './layouts/DashboardLayout';
 import LandingPage from './pages/LandingPage';
@@ -50,6 +50,7 @@ export default function App() {
               <Route path="settings" element={<Settings />} />
               <Route path="profile" element={<Profile />} />
             </Route>
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Router>
       </AuthProvider>

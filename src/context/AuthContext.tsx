@@ -26,23 +26,46 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [error, setError] = useState<string | null>(null);
     const loadUserProfile = async (userId: string) => {
         try {
-            console.log("Loading profile for user:", userId);
-            const { data: profileData, error: profileError } = await supabase
+            console.log("AuthProvider: Loading profile for", userId);
+
+            // Timeout de sécurité de 5 secondes pour éviter le chargement infini
+            const profilePromise = supabase
                 .from("user_profiles")
                 .select("*")
                 .eq("id", userId)
                 .single();
 
+            const timeoutPromise = new Promise((_, reject) =>
+                setTimeout(() => reject(new Error("Profile load timeout")), 5000)
+            );
+
+            const result = await Promise.race([
+                profilePromise,
+                timeoutPromise
+            ]) as any;
+
+            const profileData = result.data;
+            const profileError = result.error;
+
             if (profileError) {
-                console.error("Profile load error:", profileError);
+                // PGRST116 = No rows returned, which is common if signup/insert was interrupted
+                if (profileError.code === 'PGRST116') {
+                    console.warn("AuthProvider: No profile found for user. Handled.");
+                } else {
+                    console.error("AuthProvider: Profile load error:", profileError);
+                }
                 setProfile(null);
-                return;
+                return null;
             }
-            console.log("Profile loaded successfully:", profileData);
-            setProfile(profileData as UserProfile);
+
+            console.log("AuthProvider: Profile loaded successfully");
+            const userProfile = profileData as UserProfile;
+            setProfile(userProfile);
+            return userProfile;
         } catch (err) {
-            console.error("Critical error loading profile:", err);
+            console.error("AuthProvider: Critical error loading profile:", err);
             setProfile(null);
+            return null;
         }
     };
 
@@ -54,15 +77,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 if (!isMounted) return;
                 console.log("AuthProvider: Initializing...");
                 setLoading(true);
-                
+
                 const { data: { session: currentSession }, error: sessionError } = await supabase.auth.getSession();
-                
+
                 if (sessionError) {
                     console.error("AuthProvider: Session fetch error:", sessionError);
                     if (isMounted) setLoading(false);
                     return;
                 }
-                
+
                 if (currentSession && isMounted) {
                     console.log("AuthProvider: Found existing session for", currentSession.user.email);
                     setSession(currentSession);
@@ -91,8 +114,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const { data: authData } = supabase.auth.onAuthStateChange(
             async (event, newSession) => {
                 if (!isMounted) return;
-                console.log("AuthProvider: Event", event);
-                
+                console.log("AuthProvider: Auth event:", event);
+
+                // On garde loading à true pendant qu'on traite le changement
+                setLoading(true);
                 setSession(newSession);
 
                 if (newSession?.user) {
@@ -109,7 +134,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     setUser(null);
                     setProfile(null);
                 }
-                
+
                 if (isMounted) setLoading(false);
             }
         );
@@ -123,17 +148,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const login = async (email: string, password: string) => {
         try {
             setError(null);
-            const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({
-                email,
-                password,
-            });
+            const signInPromise = supabase.auth.signInWithPassword({ email, password });
+            const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('Login timeout')), 10000));
+
+            const { data: loginData, error: loginError } = await Promise.race([signInPromise, timeout]) as any;
 
             if (loginError) throw loginError;
 
             if (loginData?.user) {
                 setUser(loginData.user);
                 setSession(loginData.session);
-                await loadUserProfile(loginData.user.id);
+                loadUserProfile(loginData.user.id).catch((err) => console.error('AuthProvider.login: loadUserProfile error', err));
             }
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : "Login error";
@@ -166,6 +191,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             if (signupError) throw signupError;
 
             if (signupData?.user) {
+                console.log("AuthProvider: Signup successful, creating user_profiles record...");
                 const { error: profileError } = await supabase
                     .from("user_profiles")
                     .insert([
@@ -178,7 +204,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                         },
                     ]);
 
-                if (profileError) console.warn("Profile creation warning:", profileError);
+                if (profileError) {
+                    console.error("AuthProvider: Profile creation error:", profileError);
+                } else {
+                    console.log("AuthProvider: user_profiles record created successfully.");
+                }
 
                 setUser(signupData.user);
                 setSession(signupData.session);

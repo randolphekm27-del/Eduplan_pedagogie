@@ -13,8 +13,8 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 }) => {
     const { user, profile, loading } = useAuth();
 
-    // Afficher un loader uniquement pendant le chargement initial du contexte
-    if (loading) {
+    // Afficher un loader uniquement si on charge ET qu'on n'a pas d'utilisateur
+    if (loading && !user) {
         return (
             <div className="flex items-center justify-center h-screen bg-edu-bg">
                 <div className="flex flex-col items-center gap-4">

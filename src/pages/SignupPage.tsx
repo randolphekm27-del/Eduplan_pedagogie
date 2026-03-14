@@ -6,7 +6,7 @@ import { useAuth } from '../context/AuthContext';
 
 export default function SignupPage() {
     const navigate = useNavigate();
-    const { signup } = useAuth();
+    const { signup, user, profile, loading } = useAuth();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -15,6 +15,14 @@ export default function SignupPage() {
     const [role, setRole] = useState<'teacher' | 'student'>('teacher');
     const [subject, setSubject] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+
+    // Redirection automatique si déjà connecté
+    React.useEffect(() => {
+        if (!loading && user && profile) {
+            console.log('SignupPage: User already authenticated, redirecting to /dashboard');
+            navigate('/dashboard', { replace: true });
+        }
+    }, [user, profile, loading, navigate]);
 
     const handleSignup = async (e: React.FormEvent) => {
         e.preventDefault();
