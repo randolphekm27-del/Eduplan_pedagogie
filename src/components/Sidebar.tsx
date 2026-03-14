@@ -10,6 +10,8 @@ interface SidebarProps {
   onClose: () => void;
 }
 
+import { ThemeToggle } from './ThemeToggle';
+
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
@@ -101,7 +103,10 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         </nav>
 
         {/* Footer */}
-        <div className="p-6 border-t border-edu-light/30">
+        <div className="p-6 border-t border-edu-light/30 flex flex-col gap-4">
+          <div className="px-4">
+            <ThemeToggle />
+          </div>
           <Link to="/dashboard/settings" onClick={onClose} className={`flex items-center gap-3 px-4 py-3 lg:py-2.5 rounded-[2px] transition-all duration-200 ${isActive('/dashboard/settings') ? 'bg-edu-black/20 text-edu-bg border-l-2 border-edu-red' : 'text-edu-bg/70 hover:text-edu-bg hover:bg-edu-black/10'}`}>
             <Settings size={18} strokeWidth={1.5} />
             <span className="font-sans text-sm font-medium">Paramètres</span>

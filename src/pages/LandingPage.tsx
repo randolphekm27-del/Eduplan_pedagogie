@@ -6,6 +6,8 @@ import { toast } from 'sonner';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 
+import { ThemeToggle } from '../components/ThemeToggle';
+
 export default function LandingPage() {
   const handleComingSoon = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -15,9 +17,9 @@ export default function LandingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-edu-bg font-sans text-edu-black selection:bg-edu-red selection:text-edu-bg">
+    <div className="min-h-screen bg-edu-bg font-sans text-edu-black selection:bg-edu-red selection:text-edu-bg transition-colors duration-500">
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-edu-bg/90 backdrop-blur-md border-b border-edu-light/20">
+      <header className="sticky top-0 z-50 bg-edu-bg/90 backdrop-blur-md border-b border-edu-light/20 transition-colors duration-500">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <GraduationCap className="text-edu-red" size={28} />
@@ -31,9 +33,12 @@ export default function LandingPage() {
             <Link to="/login" className="text-sm font-medium hover:text-edu-red transition-all duration-200 border-b-2 border-transparent hover:border-edu-red">Connexion</Link>
           </nav>
           
-          <Link to="/signup">
-            <Button variant="primary" className="text-sm px-6 py-2.5">Essayer gratuitement</Button>
-          </Link>
+          <div className="flex items-center gap-4">
+            <ThemeToggle />
+            <Link to="/signup" className="hidden sm:block">
+              <Button variant="primary" className="text-sm px-6 py-2.5">Essayer gratuitement</Button>
+            </Link>
+          </div>
         </div>
       </header>
 
