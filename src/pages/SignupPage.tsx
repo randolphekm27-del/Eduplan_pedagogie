@@ -36,7 +36,8 @@ export default function SignupPage() {
                 password,
                 firstName,
                 lastName,
-                role
+                role,
+                subject
             );
 
             toast.success('Compte créé avec succès!', {

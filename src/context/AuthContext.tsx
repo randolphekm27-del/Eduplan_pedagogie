@@ -10,7 +10,7 @@ interface AuthContextType {
     loading: boolean;
     error: string | null;
     login: (email: string, password: string) => Promise<void>;
-    signup: (email: string, password: string, firstName: string, lastName: string, role: "teacher" | "student") => Promise<void>;
+    signup: (email: string, password: string, firstName: string, lastName: string, role: "teacher" | "student", subject?: string) => Promise<void>;
     logout: () => Promise<void>;
     updateProfile: (data: Partial<UserProfile>) => Promise<void>;
     resetPassword: (email: string) => Promise<void>;
@@ -188,7 +188,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         password: string,
         firstName: string,
         lastName: string,
-        role: "teacher" | "student"
+        role: "teacher" | "student",
+        subject?: string
     ) => {
         try {
             setError(null);
@@ -200,6 +201,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                         firstName,
                         lastName,
                         role,
+                        subject,
                     },
                 },
             });
@@ -207,28 +209,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             if (signupError) throw signupError;
 
             if (signupData?.user) {
-                console.log("AuthProvider: Signup successful, creating user_profiles record...");
+                console.log("AuthProvider: Signup successful, updating user_profiles record...");
+                // Note: The database trigger 'handle_new_user' also creates the profile.
+                // We use upsert here to ensure the data is exactly what the user entered,
+                // including the 'subject' which is mapped to 'specialties'.
                 const { error: profileError } = await supabase
                     .from("user_profiles")
-                    .insert([
-                        {
-                            id: signupData.user.id,
-                            email,
-                            firstname: firstName,
-                            lastname: lastName,
-                            role,
-                        },
-                    ]);
+                    .upsert({
+                        id: signupData.user.id,
+                        email,
+                        firstname: firstName,
+                        lastname: lastName,
+                        role,
+                        specialties: subject ? [subject] : [],
+                    }, { onConflict: 'id' });
 
                 if (profileError) {
-                    console.error("AuthProvider: Profile creation error:", profileError);
+                    console.error("AuthProvider: Profile update error:", profileError);
                 } else {
-                    console.log("AuthProvider: user_profiles record created successfully.");
+                    console.log("AuthProvider: user_profiles record updated successfully.");
                 }
 
                 setUser(signupData.user);
                 setSession(signupData.session);
-                // On attend le chargement effectif du profil
                 await loadUserProfile(signupData.user.id);
             }
         } catch (err) {

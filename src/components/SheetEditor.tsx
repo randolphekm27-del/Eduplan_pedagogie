@@ -345,7 +345,7 @@ export default function SheetEditor() {
             onClick={handleSave}
             className="flex items-center gap-2 px-6 py-2 text-xs font-bold bg-edu-black text-white hover:bg-edu-red rounded-[2px] transition-all shadow-lg active:scale-95"
           >
-            <Save size={14} /> SAUVEGARDER
+            <Save size={14} /> ENREGISTRER
           </button>
         </div>
       </header>
