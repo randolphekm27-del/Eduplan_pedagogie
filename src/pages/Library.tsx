@@ -12,6 +12,7 @@ export default function Library() {
   const [searchTerm, setSearchTerm] = useState('');
   const [documents, setDocuments] = useState<Fiche[]>([]);
   const [folders, setFolders] = useState<FolderType[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isNewFolderModalOpen, setIsNewFolderModalOpen] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
   const [isMoveModalOpen, setIsMoveModalOpen] = useState(false);
@@ -21,76 +22,96 @@ export default function Library() {
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [activeFolderId]);
 
-  const loadData = () => {
-    setDocuments(storageService.getFiches());
-    setFolders(storageService.getFolders());
+  const loadData = async () => {
+    setIsLoading(true);
+    try {
+      const allFiches = await storageService.getFiches();
+      const allFolders = await storageService.getFolders();
+      setDocuments(allFiches);
+      setFolders(allFolders);
+    } catch (error) {
+       console.error(error);
+       toast.error('Erreur de chargement');
+    } finally {
+       setIsLoading(false);
+    }
   };
 
   const handleCardClick = (id: string) => {
     navigate(`/dashboard/editor/${id}`);
   };
 
-  const handleCreateFolder = () => {
+  const handleCreateFolder = async () => {
     if (!newFolderName.trim()) return;
     const newFolder: FolderType = {
-      id: Date.now().toString(),
+      id: '', 
       name: newFolderName
     };
-    storageService.saveFolder(newFolder);
-    setNewFolderName('');
-    setIsNewFolderModalOpen(false);
-    loadData();
-    toast.success('Dossier créé');
+    try {
+      await storageService.saveFolder(newFolder);
+      setNewFolderName('');
+      setIsNewFolderModalOpen(false);
+      await loadData();
+      toast.success('Dossier créé');
+    } catch (e) {
+      toast.error('Erreur lors de la création du dossier');
+    }
   };
 
-  const handleDeleteFolder = (id: string, e: React.MouseEvent) => {
+  const handleDeleteFolder = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (window.confirm('Voulez-vous vraiment supprimer ce dossier ? Les fichiers qu\'il contient ne seront pas supprimés.')) {
-      storageService.deleteFolder(id);
-      if (activeFolderId === id) setActiveFolderId(null);
-      loadData();
-      toast.success('Dossier supprimé');
+      try {
+        await storageService.deleteFolder(id);
+        if (activeFolderId === id) setActiveFolderId(null);
+        await loadData();
+        toast.success('Dossier supprimé');
+      } catch (e) {
+        toast.error('Erreur lors de la suppression');
+      }
     }
   };
 
-  const handleDeleteFiche = (id: string, e: React.MouseEvent) => {
+  const handleDeleteFiche = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (window.confirm('Voulez-vous vraiment supprimer cette fiche ?')) {
-      storageService.deleteFiche(id);
-      loadData();
-      toast.success('Fiche supprimée');
+      try {
+        await storageService.deleteFiche(id);
+        await loadData();
+        toast.success('Fiche supprimée');
+      } catch (e) {
+        toast.error('Erreur lors de la suppression');
+      }
     }
   };
 
-  const handleMoveFiche = (folderId: string | undefined) => {
+  const handleMoveFiche = async (folderId: string | undefined) => {
     if (selectedFiche) {
-      storageService.moveFicheToFolder(selectedFiche.id, folderId);
-      setIsMoveModalOpen(false);
-      setSelectedFiche(null);
-      loadData();
-      toast.success('Fichier déplacé');
+      try {
+        await storageService.moveFicheToFolder(selectedFiche.id, folderId || null);
+        setIsMoveModalOpen(false);
+        setSelectedFiche(null);
+        await loadData();
+        toast.success('Fichier déplacé');
+      } catch (e) {
+        toast.error('Erreur lors du déplacement');
+      }
     }
   };
 
-  const handleComingSoon = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    toast.info('Bientôt disponible', {
-      description: 'Cette fonctionnalité est en cours de développement.'
-    });
-  };
-
-  const handleToggleFavorite = (id: string, e: React.MouseEvent) => {
+  const handleToggleFavorite = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     const doc = documents.find(d => d.id === id);
     if (doc) {
-      const newTags = doc.tags.includes('Favorite') 
-        ? doc.tags.filter(t => t !== 'Favorite')
-        : [...doc.tags, 'Favorite'];
-      storageService.saveFiche({ ...doc, tags: newTags });
-      loadData();
-      toast.success(newTags.includes('Favorite') ? 'Ajouté aux favoris' : 'Retiré des favoris');
+      try {
+        await storageService.toggleFavorite(id, !doc.isFavorite);
+        await loadData();
+        toast.success(!doc.isFavorite ? 'Ajouté aux favoris' : 'Retiré des favoris');
+      } catch (err) {
+        toast.error('Erreur lors de la mise à jour des favoris');
+      }
     }
   };
 
@@ -103,9 +124,8 @@ export default function Library() {
     
     if (!matchesSearch || !matchesFolder) return false;
 
-    if (activeFilter === 'Favorites') return doc.tags.includes('Favorite');
-    if (activeFilter === 'Récents') return doc.date === "Aujourd'hui" || doc.date === "Hier" || doc.date.includes('2026');
-    if (activeFilter === 'Partagées') return doc.tags.includes('Partagée');
+    if (activeFilter === 'Favorites') return doc.isFavorite;
+    if (activeFilter === 'Récents') return true; // Could be filtered by date
     
     return true;
   });
@@ -211,7 +231,12 @@ export default function Library() {
       </div>
 
       {/* Content Area */}
-      {filteredDocuments.length === 0 ? (
+      {isLoading ? (
+        <div className="text-center py-20">
+          <div className="w-12 h-12 border-2 border-edu-red border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-edu-dark">Chargement des documents...</p>
+        </div>
+      ) : filteredDocuments.length === 0 ? (
         <div className="text-center py-20 bg-white border border-dashed border-edu-light rounded-[2px]">
           <p className="text-edu-dark">Aucun document trouvé.</p>
         </div>
@@ -238,9 +263,9 @@ export default function Library() {
                   <div className="flex items-center gap-2">
                     <button 
                       onClick={(e) => handleToggleFavorite(doc.id, e)}
-                      className={`p-1 rounded-full transition-colors ${doc.tags.includes('Favorite') ? 'text-amber-500 bg-amber-50' : 'text-edu-light hover:text-amber-500 hover:bg-amber-50'}`}
+                      className={`p-1 rounded-full transition-colors ${doc.isFavorite ? 'text-amber-500 bg-amber-50' : 'text-edu-light hover:text-amber-500 hover:bg-amber-50'}`}
                     >
-                      <Clock size={14} className={doc.tags.includes('Favorite') ? 'fill-current' : ''} />
+                      <Clock size={14} className={doc.isFavorite ? 'fill-current' : ''} />
                     </button>
                     <span className="flex items-center gap-1 text-[10px] font-mono text-edu-dark">
                       <Clock size={12} /> {doc.date}
@@ -258,7 +283,7 @@ export default function Library() {
                 
                 <div className="mt-auto pt-4 border-t border-edu-light/30 flex justify-between items-center">
                   <div className="flex gap-2">
-                    {doc.tags.filter(t => t !== 'Favorite').map((tag, j) => (
+                    {doc.tags?.filter(t => t !== 'Favorite').map((tag, j) => (
                       <span key={j} className="flex items-center gap-1 text-[10px] bg-edu-bg text-edu-dark px-2 py-1 rounded-sm">
                         <Tag size={10} /> {tag}
                       </span>
@@ -304,17 +329,12 @@ export default function Library() {
                         <div className="flex items-center gap-3">
                           <button 
                             onClick={(e) => handleToggleFavorite(doc.id, e)}
-                            className={`p-1 rounded-full transition-colors ${doc.tags.includes('Favorite') ? 'text-amber-500' : 'text-edu-light hover:text-amber-500'}`}
+                            className={`p-1 rounded-full transition-colors ${doc.isFavorite ? 'text-amber-500' : 'text-edu-light hover:text-amber-500'}`}
                           >
-                            <Clock size={14} className={doc.tags.includes('Favorite') ? 'fill-current' : ''} />
+                            <Clock size={14} className={doc.isFavorite ? 'fill-current' : ''} />
                           </button>
                           <div>
                             <div className="font-medium text-edu-black group-hover:text-edu-red transition-colors">{doc.title}</div>
-                            <div className="flex gap-2 mt-1">
-                              {doc.tags.filter(t => t !== 'Favorite').map((tag, j) => (
-                                <span key={j} className="text-[10px] text-edu-dark">#{tag}</span>
-                              ))}
-                            </div>
                           </div>
                         </div>
                       </td>

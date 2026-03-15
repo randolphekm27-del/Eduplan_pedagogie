@@ -1,4 +1,3 @@
-// Dashboard.tsx (corrigé)
 import React, { useState, useEffect } from 'react';
 import { Search, Plus, Clock, Tag, MoreVertical, FileText } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -15,24 +14,14 @@ export default function Dashboard() {
 
   // Charger les fiches depuis le storage
   useEffect(() => {
-    const loadData = () => {
+    const loadData = async () => {
       setIsLoading(true);
       try {
-        const allFiches = storageService.getFiches();
+        const allFiches = await storageService.getFiches();
         setFiches(allFiches);
         
-        // Reprendre mes travaux : fiches avec progression ou les plus récentes
-        const recent = allFiches
-          .filter(f => (f.progress !== undefined && f.progress > 0) || f.date === "Aujourd'hui" || f.date === "Hier")
-          .slice(0, 3);
-        
-        // Si pas assez de fiches avec progression, on prend les premières
-        if (recent.length < 3) {
-          const others = allFiches.filter(f => !recent.find(r => r.id === f.id));
-          setRecentWorks([...recent, ...others].slice(0, 3));
-        } else {
-          setRecentWorks(recent);
-        }
+        // Reprendre mes travaux : les plus récentes
+        setRecentWorks(allFiches.slice(0, 3));
       } catch (error) {
         toast.error('Erreur de chargement', {
           description: 'Impossible de charger vos fiches.'
@@ -46,7 +35,6 @@ export default function Dashboard() {
   }, []);
 
   const handleCardClick = (ficheId: string) => {
-    // Naviguer vers l'éditeur avec l'ID de la fiche
     navigate(`/dashboard/editor/${ficheId}`);
   };
 
@@ -122,10 +110,15 @@ export default function Dashboard() {
               </div>
               <h4 className="font-medium text-edu-black mb-4 group-hover:text-edu-red transition-colors line-clamp-2">{item.title}</h4>
               <div className="w-full bg-edu-bg h-1.5 rounded-full overflow-hidden">
-                <div className="bg-edu-red h-full rounded-full" style={{ width: `${item.progress}%` }}></div>
+                <div className="bg-edu-red h-full rounded-full" style={{ width: `75%` }}></div>
               </div>
             </motion.div>
           ))}
+          {recentWorks.length === 0 && (
+            <div className="col-span-3 py-10 bg-white border border-dashed border-edu-light text-center rounded-[2px]">
+              <p className="text-edu-dark italic">Aucune fiche récente.</p>
+            </div>
+          )}
         </div>
       </section>
 
@@ -135,33 +128,39 @@ export default function Dashboard() {
           <h3 className="font-serif text-xl text-edu-black">Mes dernières fiches pédagogiques</h3>
           <Link to="/dashboard/library" className="text-sm text-edu-dark hover:text-edu-red transition-colors">Voir tout</Link>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredFiches.map((item) => (
-            <motion.div 
-              key={item.id}
-              onClick={() => handleCardClick(item.id)}
-              whileHover={{ y: -4 }}
-              className="bg-white border border-edu-light/50 p-6 rounded-[2px] shadow-sm hover:shadow-md hover:border-edu-light transition-all cursor-pointer group relative"
-            >
-              <button onClick={handleComingSoon} className="absolute top-4 right-4 text-edu-light hover:text-edu-black opacity-0 group-hover:opacity-100 transition-opacity">
-                <MoreVertical size={18} />
-              </button>
-              <div className="flex gap-2 mb-3">
-                <span className="text-[10px] font-mono font-bold text-edu-red">{item.subject}</span>
-                <span className="text-[10px] font-mono text-edu-dark border-l border-edu-light/50 pl-2">{item.class}</span>
-              </div>
-              <h4 className="font-bold text-edu-black mb-2 group-hover:text-edu-red transition-colors">{item.title}</h4>
-              <p className="text-xs text-edu-dark mb-4">Modifié le {item.date}</p>
-              <div className="flex gap-2">
-                {item.tags.map((tag, j) => (
-                  <span key={j} className="flex items-center gap-1 text-[10px] bg-edu-bg text-edu-dark px-2 py-1 rounded-sm">
-                    <Tag size={10} /> {tag}
-                  </span>
-                ))}
-              </div>
-            </motion.div>
-          ))}
-        </div>
+        {filteredFiches.length === 0 ? (
+          <div className="py-10 bg-white border border-dashed border-edu-light text-center rounded-[2px]">
+            <p className="text-edu-dark italic">Aucune fiche trouvée.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredFiches.map((item) => (
+              <motion.div 
+                key={item.id}
+                onClick={() => handleCardClick(item.id)}
+                whileHover={{ y: -4 }}
+                className="bg-white border border-edu-light/50 p-6 rounded-[2px] shadow-sm hover:shadow-md hover:border-edu-light transition-all cursor-pointer group relative"
+              >
+                <button onClick={handleComingSoon} className="absolute top-4 right-4 text-edu-light hover:text-edu-black opacity-0 group-hover:opacity-100 transition-opacity">
+                  <MoreVertical size={18} />
+                </button>
+                <div className="flex gap-2 mb-3">
+                  <span className="text-[10px] font-mono font-bold text-edu-red">{item.subject}</span>
+                  <span className="text-[10px] font-mono text-edu-dark border-l border-edu-light/50 pl-2">{item.class}</span>
+                </div>
+                <h4 className="font-bold text-edu-black mb-2 group-hover:text-edu-red transition-colors">{item.title}</h4>
+                <p className="text-xs text-edu-dark mb-4">Modifié le {item.date}</p>
+                <div className="flex gap-2">
+                  {item.tags?.map((tag, j) => (
+                    <span key={j} className="flex items-center gap-1 text-[10px] bg-edu-bg text-edu-dark px-2 py-1 rounded-sm">
+                      <Tag size={10} /> {tag}
+                    </span>
+                  ))}
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        )}
       </section>
 
       {/* Modèles Populaires */}

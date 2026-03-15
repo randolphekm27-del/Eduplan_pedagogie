@@ -16,10 +16,11 @@ export default function AIPrompt() {
 
   const handleGenerate = async () => {
     if (!prompt.trim()) return;
+    setIsGenerating(false); // Reset to false then set true to trigger animation correctly if needed, though usually just true is fine
     setIsGenerating(true);
 
     try {
-      toast.loading('Génération par l\'IA Deepseek...', {
+      const loadingToast = toast.loading('Génération par l\'IA Deepseek...', {
         description: 'Veuillez patienter pendant que Deepseek crée vos documents pédagogiques...'
       });
 
@@ -31,27 +32,27 @@ export default function AIPrompt() {
         duration
       );
 
-      toast.dismiss(); // Supprimer le toast de chargement
+      toast.dismiss(loadingToast);
       toast.success('Génération réussie !', {
         description: 'Votre fiche pédagogique a été créée par Deepseek.'
       });
 
-      // Construire la fiche complète avec tous les contenus générés
-      const ficheContent = {
-        id: Date.now().toString(),
+      // Construire la fiche complète selon le modèle FicheData
+      const ficheContent: any = {
+        id: '', // Sera généré par la DB
         titre: result.fichesPedagogique.titre,
+        numeroFiche: "",
         enTete: {
           matiere: result.fichesPedagogique.matiere || subject || "Non spécifié",
           classe: result.fichesPedagogique.classe || grade || "Non spécifié",
           theme: result.fichesPedagogique.titre,
           temps: result.fichesPedagogique.dureeTotale || duration || "1H",
-          objectif: result.fichesPedagogique.objectifGeneral || "",
-          date: new Date().toLocaleDateString('fr-FR'),
-          description: result.fichesPedagogique.description || ""
+          objectifGeneral: result.fichesPedagogique.objectifGeneral || "",
+          date: new Date().toLocaleDateString('fr-FR')
         },
         miseEnSituation: {
           rappel: result.documentEleve.miseEnSituation.contexte || "",
-          prerequis: result.fichesPedagogique.preRequis || [],
+          prerequis: Array.isArray(result.fichesPedagogique.preRequis) ? result.fichesPedagogique.preRequis.join(', ') : (result.fichesPedagogique.preRequis || ""),
           motivation: result.documentEleve.miseEnSituation.texte || ""
         },
         sequences: (result.fichesPedagogique.sequences || []).map((seq: any, idx: number) => ({
@@ -59,72 +60,36 @@ export default function AIPrompt() {
           numero: seq.numero || String.fromCharCode(65 + idx),
           objectif: seq.objectif || "",
           taches: seq.taches || "",
-          organisations: seq.organisations || ["TI"],
+          organisations: Array.isArray(seq.organisations) ? seq.organisations.join(', ') : (seq.organisations || ""),
           savoirs: seq.savoirs || "",
+          materiel: seq.materiel || "",
           duree: seq.duree || "10 min"
         })),
-        // Document élève COMPLÈTEMENT rempli
+        syntheseLecon: result.ficheSynthese.resume || result.ficheSynthese.ideesImportantes || "",
+        evaluationFormative: result.evaluationFormative.questions?.map((q: any) => `Q: ${q.question}\nR: ${q.reponse}`).join('\n\n') || "",
         documentEleve: {
-          title: result.documentEleve.title || "Document élève",
-          miseEnSituation: {
-            texte: result.documentEleve.miseEnSituation.texte || "",
-            contexte: result.documentEleve.miseEnSituation.contexte || ""
-          },
-          tache: {
-            enonce: result.documentEleve.tache.enonce || "",
-            objectif: result.documentEleve.tache.objectif || ""
-          },
-          supportPedagogique: {
-            titre: result.documentEleve.supportPedagogique.titre || "",
-            contenu: result.documentEleve.supportPedagogique.contenu || ""
-          },
-          consignes: result.documentEleve.consignes.consigne || [],
-          contenu: "",
-          schema: null,
-          formules: [],
-          taches: result.fichesPedagogique.materiel || []
+          activite: result.documentEleve.title || "Activité",
+          objectifGeneral: result.documentEleve.tache.objectif || "",
+          consigne: Array.isArray(result.documentEleve.consignes) ? result.documentEleve.consignes.join(', ') : (result.documentEleve.consignes || ""),
+          texte: result.documentEleve.miseEnSituation.texte || "",
+          support: result.documentEleve.supportPedagogique.contenu || "",
+          taches: Array.isArray(result.documentEleve.tache.enonce) ? result.documentEleve.tache.enonce.join('\n') : (result.documentEleve.tache.enonce || ""),
+          strategie: {
+            travailGroupe: "Oui",
+            pleniere: "Oui"
+          }
         },
-        // Synthèse COMPLÈTEMENT remplie
-        synthese: {
-          title: result.ficheSynthese.title || "Synthèse",
-          notionsPrincipales: result.ficheSynthese.notionsPrincipales || [],
-          pointsCles: result.ficheSynthese.pointsCles || [],
-          ideesImportantes: result.ficheSynthese.ideesImportantes || "",
-          resume: result.ficheSynthese.resume || "",
-          content: result.ficheSynthese.resume || ""
-        },
-        // Évaluation COMPLÈTEMENT remplie
-        evaluation: {
-          title: result.evaluationFormative.title || "Évaluation",
-          objectifEvaluation: result.evaluationFormative.objectifEvaluation || "",
-          questions: result.evaluationFormative.questions || [],
-          critereEvaluation: result.evaluationFormative.critereEvaluation || [],
-          corrige: result.evaluationFormative.corrige || { reponsesAttendues: [] },
-          content: ""
-        },
-        // Fiche de synthèse (corrigé)
         ficheSynthese: {
-          title: "Fiche de synthèse / Corrigé",
-          content: result.ficheSynthese.resume || ""
+          point1: result.ficheSynthese.notionsPrincipales?.[0] || "",
+          point2: result.ficheSynthese.notionsPrincipales?.[1] || "",
+          point3: result.ficheSynthese.notionsPrincipales?.[2] || ""
         }
       };
 
-      const newFiche = {
-        id: ficheContent.id,
-        title: ficheContent.titre,
-        subject: ficheContent.enTete.matiere,
-        class: ficheContent.enTete.classe,
-        date: ficheContent.enTete.date,
-        tags: ["IA", "Deepseek", "Complet"],
-        progress: 100,
-        content: ficheContent
-      };
-
-      storageService.saveFiche(newFiche);
-      navigate(`/dashboard/editor/${newFiche.id}`);
+      const savedId = await storageService.saveFiche(ficheContent);
+      navigate(`/dashboard/editor/${savedId}`);
     } catch (error) {
       console.error("Erreur génération IA:", error);
-      toast.dismiss(); // Supprimer le toast de chargement
       toast.error("Erreur lors de la génération", {
         description: error instanceof Error ? error.message : "Une erreur est survenue lors de la génération."
       });
@@ -188,13 +153,13 @@ export default function AIPrompt() {
               className="w-full px-4 py-3 bg-white border border-edu-light/50 rounded-[2px] outline-none focus:border-edu-red transition-colors appearance-none text-sm"
             >
               <option value="">Sélectionner...</option>
-              <option value="fr">Français</option>
-              <option value="math">Mathématiques</option>
-              <option value="hg">Histoire-Géo</option>
-              <option value="pc">Physique-Chimie</option>
-              <option value="svt">SVT</option>
-              <option value="lang">Langues</option>
-              <option value="tech">Technologie / Pro</option>
+              <option value="Français">Français</option>
+              <option value="Mathématiques">Mathématiques</option>
+              <option value="Hist-Géo">Histoire-Géo</option>
+              <option value="Physique-Chimie">Physique-Chimie</option>
+              <option value="SVT">SVT</option>
+              <option value="Langues">Langues</option>
+              <option value="Techno">Technologie / Pro</option>
             </select>
           </div>
           <div className="flex flex-col gap-1">
@@ -205,10 +170,14 @@ export default function AIPrompt() {
               className="w-full px-4 py-3 bg-white border border-edu-light/50 rounded-[2px] outline-none focus:border-edu-red transition-colors appearance-none text-sm"
             >
               <option value="">Sélectionner...</option>
-              <option value="college">Collège</option>
-              <option value="lycee">Lycée Général</option>
-              <option value="lycee_pro">Lycée Pro</option>
-              <option value="sup">BTS / Supérieur</option>
+              <option value="6ème">6ème</option>
+              <option value="5ème">5ème</option>
+              <option value="4ème">4ème</option>
+              <option value="3ème">3ème</option>
+              <option value="2nde">2nde</option>
+              <option value="1ère">1ère</option>
+              <option value="Terminale">Terminale</option>
+              <option value="BTS">BTS / Supérieur</option>
             </select>
           </div>
           <div className="flex flex-col gap-1">

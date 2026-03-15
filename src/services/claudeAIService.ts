@@ -6,91 +6,59 @@ const client = new Anthropic({
 });
 
 /**
- * Interface pour la fiche pédagogique générée
+ * Interface pour l'ensemble complet des contenus générés (aligné sur FicheData)
  */
-export interface TeachingSheet {
+export interface CompleteEducationalContent {
     titre: string;
-    description: string;
-    classe: string;
-    matiere: string;
-    objectifGeneral: string;
-    preRequis: string[];
-    materiel: string[];
-    dureeTotale: string;
+    numeroFiche: string;
+    enTete: {
+        matiere: string;
+        classe: string;
+        theme: string;
+        temps: string;
+        objectifGeneral: string;
+        date: string;
+    };
+    miseEnSituation: {
+        rappel: string;
+        prerequis: string;
+        motivation: string;
+    };
     sequences: {
+        id: string;
         numero: string;
         objectif: string;
         taches: string;
-        organisations: string[];
+        organisations: string;
         savoirs: string;
+        materiel: string;
         duree: string;
     }[];
-}
-
-/**
- * Interface pour le document élève
- */
-export interface StudentDocument {
-    title: string;
-    miseEnSituation: {
+    syntheseLecon: string;
+    evaluationFormative: string;
+    documentEleve: {
+        activite: string;
+        objectifGeneral: string;
+        consigne: string;
         texte: string;
-        contexte: string;
+        support: string;
+        taches: string;
+        strategie: {
+            travailGroupe: string;
+            pleniere: string;
+        };
     };
-    tache: {
-        enonce: string;
-        objectif: string;
+    ficheSynthese: {
+        point1: string;
+        point2: string;
+        point3: string;
     };
-    supportPedagogique: {
-        titre: string;
-        contenu: string;
-    };
-    consignes: {
-        consigne: string[];
-    };
-}
-
-/**
- * Interface pour la fiche synthèse
- */
-export interface SynthesisSheet {
-    title: string;
-    notionsPrincipales: string[];
-    pointsCles: string[];
-    ideesImportantes: string;
-    resume: string;
-}
-
-/**
- * Interface pour l'évaluation formative
- */
-export interface FormativeEvaluation {
-    title: string;
-    objectifEvaluation: string;
-    questions: {
-        numero: number;
-        question: string;
-        typeQuestion: string;
-    }[];
-    critereEvaluation: string[];
-    corrige: {
-        reponsesAttendues: string[];
-    };
-}
-
-/**
- * Interface pour l'ensemble complet des contenus générés
- */
-export interface CompleteEducationalContent {
-    fichesPedagogique: TeachingSheet;
-    documentEleve: StudentDocument;
-    ficheSynthese: SynthesisSheet;
-    evaluationFormative: FormativeEvaluation;
 }
 
 export const claudeAIService = {
     /**
      * Génère de manière complète tous les contenus pédagogiques en une seule requête
-     * Assure la cohérence pédagogique entre tous les documents
+     * Assure la cohérence pédagogique entre tous les documents selon le modèle 3-pages
      */
     generateCompletePedagogicalContent: async (
         prompt: string,
@@ -107,101 +75,67 @@ export const claudeAIService = {
     ${grade ? `Classe: ${grade}` : ""}
     ${duration ? `Durée: ${duration}` : ""}
     
-    ⚠️ IMPORTANT: Tous les documents doivent être cohérents entre eux. La mise en situation doit aider à répondre à la tâche, les consignes doivent être liées au support, et la synthèse doit reprendre les éléments importants.
-    
+    ⚠️ IMPORTANT: Tu dois produire un document organisé en 3 PAGES DISTINCTES :
+    Page 1: Fiche Pédagogique (En-tête, Mise en situation, Séquences, Synthèse & Évaluation)
+    Page 2: Document Élève (Activités, Textes, Supports, Tâches)
+    Page 3: Fiche de Synthèse (Points clés sous forme de 3 zones distinctes)
+
     Génère et retourne un JSON valide STRICTEMENT respectant ce schéma :
     {
-      "fichesPedagogique": {
-        "titre": "Titre de la leçon",
-        "description": "Description courte et pertinente de la leçon",
-        "classe": "Niveau (ex: Bac Pro MELEC, 4ème)",
+      "titre": "Titre de la leçon",
+      "numeroFiche": "CP-001",
+      "enTete": {
         "matiere": "Discipline",
-        "objectifGeneral": "Objectif global de la séance",
-        "preRequis": ["liste des pré-requis"],
-        "materiel": ["liste du matériel nécessaire"],
-        "dureeTotale": "Durée totale estimée (ex: 2H)",
-        "sequences": [
-          {
-            "numero": "1",
-            "objectif": "Objectif de la séquence",
-            "taches": "Description détaillée des activités et tâches",
-            "organisations": ["Classe entière", "Binômes", etc.],
-            "savoirs": "Savoirs associés (S1, S2, etc.) ou compétences visées",
-            "duree": "Durée de la séquence (ex: 45 min)"
-          }
-        ]
+        "classe": "Niveau (ex: Bac Pro MELEC, 4ème)",
+        "theme": "Thème du cours",
+        "temps": "Durée (ex: 1H)",
+        "objectifGeneral": "Ce que l'élève sera capable de faire",
+        "date": "${new Date().toLocaleDateString('fr-FR')}"
       },
+      "miseEnSituation": {
+        "rappel": "Rappel du cours précédent",
+        "prerequis": "Liste des pré-requis nécessaires",
+        "motivation": "Pourquoi cette leçon est importante"
+      },
+      "sequences": [
+        {
+          "id": "seq-1",
+          "numero": "1",
+          "objectif": "Objectif opérationnel",
+          "taches": "Activités et tâches des élèves",
+          "organisations": "TI, TG, ou Plénière",
+          "savoirs": "Savoirs associés",
+          "materiel": "Outils ou documents nécessaires",
+          "duree": "15 min"
+        }
+      ],
+      "syntheseLecon": "Résumé structuré pour le professeur",
+      "evaluationFormative": "Questions et critères d'évaluation",
       "documentEleve": {
-        "title": "Document élève",
-        "miseEnSituation": {
-          "texte": "Texte introductif permettant d'introduire le thème de la leçon (3-5 lignes). Doit contextualiser le sujet, susciter l'intérêt et contenir des informations utiles pour répondre à la tâche.",
-          "contexte": "Contexte général de la mise en situation"
-        },
-        "tache": {
-          "enonce": "Une tâche claire et UNIQUE formulée en une seule phrase indiquant clairement ce que les apprenants doivent accomplir",
-          "objectif": "L'objectif concret de l'activité"
-        },
-        "supportPedagogique": {
-          "titre": "Titre du support",
-          "contenu": "Support pédagogique complet (texte, données, situation, contenu) permettant aux apprenants de travailler sur la tâche. Doit être suffisamment détaillé et pertinent."
-        },
-        "consignes": {
-          "consigne": [
-            "Consigne 1: Ce que les apprenants doivent analyser",
-            "Consigne 2: Ce qu'ils doivent produire",
-            "Consigne 3: Comment répondre à la tâche (étapes, format, etc.)"
-          ]
+        "activite": "Titre de l'activité élève",
+        "objectifGeneral": "Objectif pour l'élève",
+        "consigne": "Consigne globale de travail",
+        "texte": "Texte de mise en situation ou corpus",
+        "support": "Données techniques ou ressources",
+        "taches": "Liste des tâches à accomplir (une par ligne)",
+        "strategie": {
+          "travailGroupe": "Format du travail en groupe",
+          "pleniere": "Format de la restitution"
         }
       },
       "ficheSynthese": {
-        "title": "Fiche synthèse",
-        "notionsPrincipales": ["Notion 1", "Notion 2", "Notion 3"],
-        "pointsCles": ["Point clé 1", "Point clé 2", "Point clé 3"],
-        "ideesImportantes": "Paragraphe résumant les idées importantes du cours (3-5 lignes)",
-        "resume": "Résumé complet et structuré des éléments essentiels du thème étudié"
-      },
-      "evaluationFormative": {
-        "title": "Évaluation formative",
-        "objectifEvaluation": "Objectif global de l'évaluation formative",
-        "questions": [
-          {
-            "numero": 1,
-            "question": "Question 1 claire et pertinente relative au contenu pédagogique",
-            "typeQuestion": "Type (QCM, Vrai/Faux, Réponse courte, Développement, etc.)"
-          },
-          {
-            "numero": 2,
-            "question": "Question 2",
-            "typeQuestion": "Type de question"
-          },
-          {
-            "numero": 3,
-            "question": "Question 3",
-            "typeQuestion": "Type de question"
-          }
-        ],
-        "critereEvaluation": [
-          "Critère 1 d'évaluation",
-          "Critère 2 d'évaluation",
-          "Critère 3 d'évaluation"
-        ],
-        "corrige": {
-          "reponsesAttendues": [
-            "Réponse attendue à la question 1",
-            "Réponse attendue à la question 2",
-            "Réponse attendue à la question 3"
-          ]
-        }
+        "point1": "Premier grand point de synthèse (essentiel)",
+        "point2": "Deuxième grand point de synthèse (méthode)",
+        "point3": "Troisième grand point de synthèse (conclusion)"
       }
     }
     
     Respecte strictement ce schéma JSON. Assure-toi que :
-    1. Les contenus sont pédagogiquement cohérents
-    2. Le document élève est prêt à être utilisé directement
-    3. La synthèse reprend les éléments clés des autres documents
-    4. L'évaluation teste les compétences visées
-    5. Tous les textes sont en français impeccable
-    6. Les durées et niveaux sont réalistes
+    1. Les contenus sont pédagogiquement cohérents entre les 3 pages.
+    2. Le langage est professionnel et adapté au niveau ${grade || 'indiqué'}.
+    3. Toutes les propriétés sont remplies avec du contenu de haute qualité.
+    4. Les tâches dans 'documentEleve.taches' sont séparées par des retours à la ligne.
+    5. 'sequences' doit contenir au moins 3 à 5 étapes logiques.
     `;
 
         try {
@@ -216,36 +150,24 @@ export const claudeAIService = {
                 ],
             });
 
-            // Extraire le texte de la réponse
-            const responseText =
-                response.content[0].type === "text" ? response.content[0].text : "";
-
-            // Parser le JSON
+            const responseText = response.content[0].type === "text" ? response.content[0].text : "";
             const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-            if (!jsonMatch) {
-                throw new Error("Aucun JSON trouvé dans la réponse");
-            }
+            if (!jsonMatch) throw new Error("Aucun JSON trouvé");
 
-            const generatedContent: CompleteEducationalContent = JSON.parse(
-                jsonMatch[0]
-            );
-
-            // Validation basique de la structure
-            if (
-                !generatedContent.fichesPedagogique ||
-                !generatedContent.documentEleve ||
-                !generatedContent.ficheSynthese ||
-                !generatedContent.evaluationFormative
-            ) {
-                throw new Error("Structure JSON invalide");
+            const generatedContent = JSON.parse(jsonMatch[0]);
+            
+            // Post-processing: inject unique IDs for sequences if needed
+            if (generatedContent.sequences) {
+                generatedContent.sequences = generatedContent.sequences.map((s: any, i: number) => ({
+                    ...s,
+                    id: s.id || `seq-${Date.now()}-${i}`
+                }));
             }
 
             return generatedContent;
         } catch (error) {
-            console.error("Erreur génération contenu pédagogique:", error);
-            throw new Error(
-                "Erreur lors de la génération du contenu pédagogique par Claude"
-            );
+            console.error("Erreur génération AI:", error);
+            throw new Error("Erreur lors de la génération du contenu pédagogique par Claude");
         }
     },
 
@@ -343,7 +265,7 @@ export const claudeAIService = {
                           "numero": "1",
                           "objectif": "Objectif",
                           "taches": "Description des tâches",
-                          "organisations": ["Classe entière"],
+                          "organisations": "Classe entière",
                           "savoirs": "Savoirs associés",
                           "duree": "15 min"
                         }
@@ -363,7 +285,6 @@ export const claudeAIService = {
                     }
                 });
             } else {
-                // Pour le texte, on décode le base64 si possible ou on traite comme texte
                 try {
                     const decodedText = atob(base64Data);
                     content[0].text += `\n\nContenu du document :\n${decodedText}`;

@@ -11,90 +11,16 @@ import { toast } from 'sonner';
 import RichTextEditor from './RichTextEditor';
 import SectionEditor from './SectionEditor';
 import { storageService, Fiche } from '../services/storageService';
+import { FicheData, Sequence, generateDocumentHTML } from '../utils/documentTemplate';
 
-// Types pour les données de fiche
-interface Sequence {
-  id: string;
-  numero: string;
-  objectif: string;
-  taches: string;
-  organisations: string[];
-  savoirs: string;
-  duree: string;
-}
-
+// interfaces and types moved to documentTemplate.ts
 interface Section {
   id: string;
   label: string;
   type: 'main' | 'sub';
   parentId?: string;
-  content?: any;
 }
 
-interface FicheData {
-  id: string;
-  titre: string;
-  enTete: {
-    matiere: string;
-    classe: string;
-    theme: string;
-    temps: string;
-    objectif: string;
-    date: string;
-  };
-  miseEnSituation: {
-    rappel: string;
-    prerequis: string[];
-    motivation: string;
-  };
-  sequences: Sequence[];
-  documentEleve: {
-    title: string;
-    contenu?: string;
-    schema?: string | null;
-    formules?: string[];
-    taches?: string[];
-    miseEnSituation?: {
-      texte: string;
-      contexte: string;
-    };
-    tache?: {
-      enonce: string;
-      objectif: string;
-    };
-    supportPedagogique?: {
-      titre: string;
-      contenu: string;
-    };
-    consignes?: string[];
-  };
-  synthese: {
-    title: string;
-    content?: string;
-    notionsPrincipales?: string[];
-    pointsCles?: string[];
-    ideesImportantes?: string;
-    resume?: string;
-  };
-  evaluation: {
-    title: string;
-    content?: string;
-    objectifEvaluation?: string;
-    questions?: Array<{
-      numero: number;
-      question: string;
-      typeQuestion: string;
-    }>;
-    critereEvaluation?: string[];
-    corrige?: {
-      reponsesAttendues: string[];
-    };
-  };
-  ficheSynthese: {
-    title: string;
-    content: string;
-  };
-}
 
 export default function SheetEditor() {
   const { id } = useParams();
@@ -116,87 +42,52 @@ export default function SheetEditor() {
   // Charger la fiche depuis le storage
   useEffect(() => {
     const loadFiche = async () => {
+      if (!id) {
+          setIsLoading(false);
+          setFicheData(null);
+          return;
+      }
       setIsLoading(true);
       try {
-        const allFiches = storageService.getFiches();
-        const existingFiche = allFiches.find(f => f.id === id);
+        const content = await storageService.getFicheById(id);
 
-        if (existingFiche && existingFiche.content) {
-          setFicheData(existingFiche.content);
+        if (content) {
+          // Adapter les données si nécessaire
+          const adaptedData: FicheData = {
+            ...content,
+            id: content.id || id,
+            titre: content.titre || '',
+            sequences: content.sequences || [],
+            extraPages: content.extraPages || []
+          };
+          setFicheData(adaptedData);
 
           // Construire les sections à partir des données chargées
-          const newSections: Section[] = [
-            { id: 'en-tete', label: 'En-tête', type: 'main' },
-            { id: 'situation', label: 'Mise en situation', type: 'main' },
-            { id: 'sequences', label: 'Séquences', type: 'main' },
-            ...(existingFiche.content.sequences || []).map((seq: Sequence) => ({
-              id: seq.id,
-              label: `${seq.numero}. ${seq.objectif.substring(0, 30)}...`,
-              type: 'sub' as const,
-              parentId: 'sequences'
-            })),
-            { id: 'synthese', label: 'Synthèse', type: 'main' },
-            { id: 'evaluation', label: 'Évaluation', type: 'main' },
-            { id: 'document', label: 'Document élève', type: 'main' },
-            { id: 'fiche', label: 'Fiche de synthèse', type: 'main' }
+          const newSections: any[] = [
+            { id: 'page1', label: '1. Fiche Pédagogique', type: 'main' },
+            { id: 'en-tete', label: 'En-tête', type: 'sub', parentId: 'page1' },
+            { id: 'situation', label: 'Mise en situation', type: 'sub', parentId: 'page1' },
+            { id: 'sequences', label: 'Séquences (Tableau)', type: 'sub', parentId: 'page1' },
+            { id: 'page2', label: '2. Document Élève', type: 'main' },
+            { id: 'page3', label: '3. Fiche de Synthèse', type: 'main' },
+            { id: 'page4', label: '4. Évaluation Formative', type: 'main' }
           ];
-          setSections(newSections);
-        } else {
-          // Données par défaut si pas de contenu stocké
-          const defaultData: FicheData = {
-            id: id || Date.now().toString(),
-            titre: existingFiche?.title || "Nouvelle fiche pédagogique",
-            enTete: {
-              matiere: existingFiche?.subject || '',
-              classe: existingFiche?.class || '',
-              theme: existingFiche?.title || '',
-              temps: '1H',
-              objectif: '',
-              date: new Date().toLocaleDateString('fr-FR')
-            },
-            miseEnSituation: {
-              rappel: "",
-              prerequis: [],
-              motivation: ""
-            },
-            sequences: [],
-            documentEleve: {
-              title: "Document élève",
-              contenu: "",
-              schema: null,
-              formules: [],
-              taches: []
-            },
-            synthese: {
-              title: "Synthèse",
-              content: ""
-            },
-            evaluation: {
-              title: "Évaluation",
-              content: ""
-            },
-            ficheSynthese: {
-              title: "Corrigé",
-              content: ""
-            }
-          };
-          setFicheData(defaultData);
 
-          const initialSections: Section[] = [
-            { id: 'en-tete', label: 'En-tête', type: 'main' },
-            { id: 'situation', label: 'Mise en situation', type: 'main' },
-            { id: 'sequences', label: 'Séquences', type: 'main' },
-            { id: 'synthese', label: 'Synthèse', type: 'main' },
-            { id: 'evaluation', label: 'Évaluation', type: 'main' },
-            { id: 'document', label: 'Document élève', type: 'main' },
-            { id: 'fiche', label: 'Fiche de synthèse', type: 'main' }
-          ];
-          setSections(initialSections);
+          if (adaptedData.extraPages) {
+            adaptedData.extraPages.forEach((p: any) => {
+              newSections.push({ id: p.id, label: p.title, type: 'main' });
+            });
+          }
+
+          setSections(newSections);
+
+        } else {
+          toast.error("Fiche non trouvée");
+          navigate('/dashboard/library');
         }
       } catch (error) {
-        toast.error('Erreur de chargement', {
-          description: 'Impossible de charger la fiche.'
-        });
+        console.error(error);
+        toast.error('Erreur de chargement');
       } finally {
         setIsLoading(false);
       }
@@ -224,33 +115,14 @@ export default function SheetEditor() {
   const handleSave = async () => {
     if (!ficheData) return;
     try {
-      const allFiches = storageService.getFiches();
-      const existingFiche = allFiches.find(f => f.id === ficheData.id);
-
-      const updatedFiche: Fiche = {
-        id: ficheData.id,
-        title: ficheData.titre,
-        subject: ficheData.enTete?.matiere || '',
-        class: ficheData.enTete?.classe || '',
-        date: existingFiche?.date || new Date().toLocaleDateString('fr-FR'),
-        tags: existingFiche?.tags || ["Cours"],
-        progress: existingFiche?.progress || 50,
-        theme: ficheData.enTete?.theme || '',
-        folderId: existingFiche?.folderId,
-        content: ficheData
-      };
-
-      storageService.saveFiche(updatedFiche);
+      const savedId = await storageService.saveFiche(ficheData);
       setIsSaved(true);
+      toast.success('Fiche enregistrée avec succès');
 
       // Si c'était une nouvelle fiche sans ID dans l'URL, on met à jour l'URL
-      if (!id) {
-        navigate(`/dashboard/editor/${ficheData.id}`, { replace: true });
+      if (!id || id === 'new') {
+        navigate(`/dashboard/editor/${savedId}`, { replace: true });
       }
-
-      toast.success('Sauvegardé', {
-        description: 'Vos modifications ont été enregistrées avec succès.'
-      });
     } catch (error) {
       toast.error('Erreur de sauvegarde', {
         description: 'Impossible de sauvegarder les modifications.'
@@ -261,60 +133,64 @@ export default function SheetEditor() {
   const updateFicheData = (path: string[], value: any) => {
     if (!ficheData) return;
 
-    // Mise à jour profonde de l'objet
-    const newData = { ...ficheData };
-    let current: any = newData;
-    for (let i = 0; i < path.length - 1; i++) {
-      current = current[path[i]];
-    }
-    current[path[path.length - 1]] = value;
-
-    setFicheData(newData);
+    setFicheData(prev => {
+      if (!prev) return prev;
+      const newData = JSON.parse(JSON.stringify(prev));
+      let current: any = newData;
+      for (let i = 0; i < path.length - 1; i++) {
+        if (!current[path[i]]) current[path[i]] = {};
+        current = current[path[i]];
+      }
+      current[path[path.length - 1]] = value;
+      return newData;
+    });
     setIsSaved(false);
   };
 
-  // Ajouter une nouvelle section
+  // Ajouter une nouvelle page (extra)
   const addNewSection = () => {
-    const newId = `section-${Date.now()}`;
+    if (!ficheData) return;
+    const newId = `extra-${Date.now()}`;
+    const newPage = { id: newId, title: 'Nouvelle Page', content: 'Contenu de la page...' };
+    
+    updateFicheData(['extraPages'], [...(ficheData.extraPages || []), newPage]);
+    
     const newSection: Section = {
       id: newId,
-      label: 'Nouvelle section',
+      label: newPage.title,
       type: 'main'
     };
     setSections([...sections, newSection]);
     setIsSaved(false);
     setActiveSection(newId);
-    toast.success('Section ajoutée', {
-      description: 'Vous pouvez maintenant personnaliser cette section.'
-    });
+    toast.success('Page ajoutée');
   };
 
-  // Supprimer une section
+
+  // Supprimer une section (page extra)
   const deleteSection = (sectionId: string, e: React.MouseEvent) => {
     e.stopPropagation();
 
     // Vérifier si ce sont des sections protégées
-    const protectedSections = ['en-tete', 'situation', 'sequences', 'synthese', 'evaluation', 'document', 'fiche'];
+    const protectedSections = ['page1', 'en-tete', 'situation', 'sequences', 'page2', 'page3', 'page4'];
     if (protectedSections.includes(sectionId)) {
-      toast.error('Section protégée', {
-        description: 'Cette section ne peut pas être supprimée.'
+      toast.error('Page protégée', {
+        description: 'Cette page fait partie du socle obligatoire.'
       });
       return;
     }
 
-    // Demander confirmation
-    if (window.confirm('Êtes-vous sûr de vouloir supprimer cette section ?')) {
+    if (window.confirm('Supprimer cette page ?')) {
+      if (ficheData?.extraPages) {
+        updateFicheData(['extraPages'], ficheData.extraPages.filter(p => p.id !== sectionId));
+      }
       setSections(sections.filter(s => s.id !== sectionId));
       setIsSaved(false);
-
-      // Si la section supprimée était active, activer la première section
-      if (activeSection === sectionId) {
-        setActiveSection(sections[0]?.id || '');
-      }
-
-      toast.success('Section supprimée');
+      if (activeSection === sectionId) setActiveSection('page1');
+      toast.success('Page supprimée');
     }
   };
+
 
   // Ajouter une séquence
   const addSequence = () => {
@@ -325,10 +201,12 @@ export default function SheetEditor() {
       numero: String.fromCharCode(65 + ficheData.sequences.length), // A, B, C...
       objectif: "Nouvel objectif opérationnel",
       taches: "Activité à définir",
-      organisations: ['TI', 'TG'],
+      organisations: 'TI, TG',
       savoirs: "Savoirs associés",
+      materiel: "Matériel",
       duree: "10 min"
     };
+
 
     updateFicheData(['sequences'], [...ficheData.sequences, newSequence]);
 
@@ -359,16 +237,19 @@ export default function SheetEditor() {
   // Ajouter une tâche dans document élève
   const addTask = () => {
     if (!ficheData) return;
-    const newTasks = [...(ficheData.documentEleve.taches || []), "Nouvelle tâche"];
+    const currentTasks = ficheData.documentEleve.taches || "";
+    const newTasks = currentTasks + (currentTasks ? "\n" : "") + "Nouvelle tâche";
     updateFicheData(['documentEleve', 'taches'], newTasks);
   };
 
-  // Supprimer une tâche
+  // Supprimer une tâche (adapted for string-based tasks)
   const deleteTask = (index: number) => {
     if (!ficheData) return;
-    const newTasks = ficheData.documentEleve.taches.filter((_, i) => i !== index);
+    const taskList = ficheData.documentEleve.taches.split('\n');
+    const newTasks = taskList.filter((_, i) => i !== index).join('\n');
     updateFicheData(['documentEleve', 'taches'], newTasks);
   };
+
 
   // Modifier le tableau des séquences
   const updateSequence = (index: number, field: keyof Sequence, value: string | string[]) => {
@@ -434,8 +315,6 @@ export default function SheetEditor() {
               </span>
             </div>
             <div className="flex items-center gap-2 text-[10px] text-edu-dark uppercase tracking-tighter">
-              <span>Bibliothèque</span>
-              <span>/</span>
               <span className="text-edu-red font-bold">{ficheData.enTete?.matiere || 'Sans matière'}</span>
             </div>
           </div>
@@ -444,7 +323,9 @@ export default function SheetEditor() {
         <div className="flex items-center gap-4">
           <div className="flex items-center bg-edu-light/20 p-1 rounded-[4px] gap-1">
             <button
-              onClick={() => navigate(`/dashboard/preview/${id}`)}
+              onClick={() => {
+                navigate(`/dashboard/preview/${id}`, { state: { draft: ficheData } });
+              }}
               className="flex items-center gap-2 px-3 py-1.5 text-xs font-bold text-edu-dark hover:text-edu-black hover:bg-white rounded-[2px] transition-all"
             >
               <Eye size={14} /> APERÇU
@@ -542,6 +423,18 @@ export default function SheetEditor() {
 
                   <div className="grid grid-cols-2 gap-8 mb-8 border-b-2 border-edu-black pb-8">
                     <div className="space-y-2">
+                      <label className="text-[10px] font-bold text-edu-dark uppercase tracking-widest">Numéro Fiche</label>
+                      <input
+                        type="text"
+                        value={ficheData.numeroFiche || ''}
+                        onChange={(e) => updateFicheData(['numeroFiche'], e.target.value)}
+                        className="w-full bg-transparent border-b border-edu-light/50 focus:border-edu-red outline-none py-1 font-serif text-lg transition-colors"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-8 mb-8 border-b-2 border-edu-black pb-8">
+                    <div className="space-y-2">
                       <label className="text-[10px] font-bold text-edu-dark uppercase tracking-widest">Matière</label>
                       <input
                         type="text"
@@ -584,11 +477,11 @@ export default function SheetEditor() {
                       />
                     </div>
                     <div className="col-span-2 space-y-2">
-                      <label className="text-[10px] font-bold text-edu-dark uppercase tracking-widest">Objectif global</label>
+                      <label className="text-[10px] font-bold text-edu-dark uppercase tracking-widest">Objectif général</label>
                       <input
                         type="text"
-                        value={ficheData.enTete?.objectif || ''}
-                        onChange={(e) => updateFicheData(['enTete', 'objectif'], e.target.value)}
+                        value={ficheData.enTete?.objectifGeneral || ''}
+                        onChange={(e) => updateFicheData(['enTete', 'objectifGeneral'], e.target.value)}
                         className="w-full bg-transparent border-b border-edu-light/50 focus:border-edu-red outline-none py-1 text-sm italic transition-colors"
                       />
                     </div>
@@ -623,6 +516,16 @@ export default function SheetEditor() {
                     </div>
 
                     <div className="space-y-2">
+                      <label className="text-[10px] font-bold text-edu-dark uppercase tracking-widest">Pré-requis</label>
+                      <textarea
+                        value={ficheData.miseEnSituation.prerequis}
+                        onChange={(e) => updateFicheData(['miseEnSituation', 'prerequis'], e.target.value)}
+                        className="w-full bg-transparent border border-edu-light/50 focus:border-edu-red outline-none p-3 text-sm min-h-[80px] transition-colors"
+                        placeholder="Pré-requis nécessaires..."
+                      />
+                    </div>
+
+                    <div className="space-y-2">
                       <label className="text-[10px] font-bold text-edu-dark uppercase tracking-widest">Motivation / Problématique</label>
                       <textarea
                         value={ficheData.miseEnSituation.motivation}
@@ -650,313 +553,286 @@ export default function SheetEditor() {
                       <span className="bg-edu-black text-white w-6 h-6 flex items-center justify-center text-[10px]">02</span>
                       DÉROULEMENT PÉDAGOGIQUE
                     </h3>
-                    <button
-                      onClick={addSequence}
-                      className="flex items-center gap-2 px-3 py-1.5 text-[10px] font-bold text-edu-red border border-edu-red/30 hover:bg-edu-red hover:text-white rounded-[2px] transition-all"
-                    >
-                      <Plus size={14} /> AJOUTER SÉQUENCE
-                    </button>
                   </div>
 
-                  <div className="space-y-8">
+                  <div className="space-y-6">
                     {ficheData.sequences.map((seq, idx) => (
-                      <div key={seq.id} id={seq.id} className="border border-edu-light/50 p-6 rounded-[2px] relative group/seq">
-                        <div className="absolute -left-3 top-6 w-6 h-6 bg-white border border-edu-black flex items-center justify-center font-bold text-xs shadow-sm">
-                          {seq.numero}
-                        </div>
-
-                        <div className="grid grid-cols-1 gap-6">
-                          <div className="space-y-2">
-                            <label className="text-[10px] font-bold text-edu-dark uppercase tracking-widest">Objectif opérationnel</label>
-                            <input
-                              type="text"
-                              value={seq.objectif}
-                              onChange={(e) => {
-                                const newSeqs = [...ficheData.sequences];
-                                newSeqs[idx].objectif = e.target.value;
-                                updateFicheData(['sequences'], newSeqs);
-                              }}
-                              className="w-full bg-transparent border-b border-edu-light/50 focus:border-edu-red outline-none py-1 text-sm font-bold transition-colors"
-                            />
-                          </div>
-
-                          <div className="grid grid-cols-2 gap-6">
-                            <div className="space-y-2">
-                              <label className="text-[10px] font-bold text-edu-dark uppercase tracking-widest">Activités / Tâches</label>
-                              <textarea
-                                value={seq.taches}
-                                onChange={(e) => {
-                                  const newSeqs = [...ficheData.sequences];
-                                  newSeqs[idx].taches = e.target.value;
-                                  updateFicheData(['sequences'], newSeqs);
-                                }}
-                                className="w-full bg-transparent border border-edu-light/50 focus:border-edu-red outline-none p-3 text-xs min-h-[60px] transition-colors"
-                              />
-                            </div>
-                            <div className="space-y-2">
-                              <label className="text-[10px] font-bold text-edu-dark uppercase tracking-widest">Savoirs associés</label>
-                              <textarea
-                                value={seq.savoirs}
-                                onChange={(e) => {
-                                  const newSeqs = [...ficheData.sequences];
-                                  newSeqs[idx].savoirs = e.target.value;
-                                  updateFicheData(['sequences'], newSeqs);
-                                }}
-                                className="w-full bg-transparent border border-edu-light/50 focus:border-edu-red outline-none p-3 text-xs min-h-[60px] transition-colors"
-                              />
-                            </div>
-                          </div>
-                        </div>
-
+                      <div key={seq.id} className="border border-edu-light/50 p-6 rounded-[2px] bg-white shadow-sm relative group">
                         <button
-                          onClick={() => {
-                            const newSeqs = ficheData.sequences.filter(s => s.id !== seq.id);
-                            updateFicheData(['sequences'], newSeqs);
-                          }}
-                          className="absolute top-4 right-4 text-edu-dark hover:text-edu-red opacity-0 group-hover/seq:opacity-100 transition-opacity"
+                          onClick={() => deleteSequence(seq.id)}
+                          className="absolute -right-3 -top-3 w-8 h-8 bg-white border border-red-200 text-red-500 rounded-full flex items-center justify-center hover:bg-red-50 transition-colors shadow-sm opacity-0 group-hover:opacity-100"
                         >
                           <Trash2 size={14} />
                         </button>
+                        <div className="grid grid-cols-6 gap-4">
+                          <div className="col-span-1 border-r border-edu-light/50 pr-4">
+                            <label className="text-[10px] font-bold uppercase block mb-1">Seq</label>
+                            <input
+                              className="w-full font-bold text-center bg-gray-50 border border-gray-200 py-1"
+                              value={seq.numero}
+                              onChange={(e) => updateSequence(idx, 'numero', e.target.value)}
+                            />
+                            <label className="text-[10px] font-bold uppercase block mt-3 mb-1">Durée</label>
+                            <input
+                              className="w-full text-center text-xs bg-gray-50 border border-gray-200 py-1"
+                              value={seq.duree}
+                              onChange={(e) => updateSequence(idx, 'duree', e.target.value)}
+                            />
+                          </div>
+                          <div className="col-span-5 space-y-4">
+                            <div>
+                              <label className="text-[10px] font-bold uppercase block mb-1">Objectif opérationnel</label>
+                              <RichTextEditor
+                                content={seq.objectif}
+                                onChange={(html) => updateSequence(idx, 'objectif', html)}
+                              />
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <label className="text-[10px] font-bold uppercase block mb-1">Tâches (Élèves)</label>
+                                <RichTextEditor
+                                  content={seq.taches}
+                                  onChange={(html) => updateSequence(idx, 'taches', html)}
+                                />
+                              </div>
+                              <div>
+                                <label className="text-[10px] font-bold uppercase block mb-1">Organisation</label>
+                                <input
+                                  className="w-full text-xs p-2 border border-gray-200"
+                                  value={seq.organisations}
+                                  onChange={(e) => updateSequence(idx, 'organisations', e.target.value)}
+                                />
+                              </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <label className="text-[10px] font-bold uppercase block mb-1">Savoirs associés</label>
+                                <RichTextEditor
+                                  content={seq.savoirs}
+                                  onChange={(html) => updateSequence(idx, 'savoirs', html)}
+                                />
+                              </div>
+                              <div>
+                                <label className="text-[10px] font-bold uppercase block mb-1">Matériel</label>
+                                <input
+                                  className="w-full text-xs p-2 border border-gray-200"
+                                  value={seq.materiel}
+                                  onChange={(e) => updateSequence(idx, 'materiel', e.target.value)}
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     ))}
+
+                    <button
+                      onClick={addSequence}
+                      className="w-full py-4 border-2 border-dashed border-edu-light hover:border-edu-red hover:bg-edu-red/5 text-edu-dark hover:text-edu-red transition-all flex items-center justify-center gap-2 font-bold text-xs rounded"
+                    >
+                      <Plus size={16} /> AJOUTER UNE SÉQUENCE
+                    </button>
                   </div>
                 </div>
 
                 {/* Synthèse & Évaluation */}
-                <div className="grid grid-cols-1 gap-16 mb-16">
-                  <div id="synthese" className={`relative group p-6 border-2 transition-all ${activeSection === 'synthese' ? 'border-edu-black bg-edu-light/5' : 'border-transparent hover:border-edu-light/50'
-                    }`} onClick={() => setActiveSection('synthese')}>
-                    <h3 className="text-xs font-bold text-edu-black uppercase tracking-[0.2em] mb-8 flex items-center gap-4">
+                <div id="synthese-eval" className="grid grid-cols-1 gap-12 mb-16">
+                  <div className={`relative group p-6 border-2 transition-all ${activeSection === 'synthese-eval' ? 'border-edu-black bg-edu-light/5' : 'border-transparent hover:border-edu-light/50'
+                    }`} onClick={() => setActiveSection('synthese-eval')}>
+                    <h3 className="text-xs font-bold text-edu-black uppercase tracking-[0.2em] mb-4 flex items-center gap-4">
                       <span className="bg-edu-black text-white w-6 h-6 flex items-center justify-center text-[10px]">03</span>
-                      SYNTHÈSE DU COURS
+                      SYNTHÈSE DE LA LEÇON
                     </h3>
+                    <RichTextEditor
+                      content={ficheData.syntheseLecon}
+                      onChange={(html) => updateFicheData(['syntheseLecon'], html)}
+                    />
 
-                    {/* Afficher les notions principales si disponibles */}
-                    {ficheData.synthese.notionsPrincipales && ficheData.synthese.notionsPrincipales.length > 0 && (
-                      <div className="mb-8">
-                        <h4 className="text-[10px] font-bold text-edu-dark uppercase tracking-widest mb-4">Notions principales</h4>
-                        <div className="flex flex-wrap gap-2">
-                          {ficheData.synthese.notionsPrincipales.map((notion, i) => (
-                            <span key={i} className="bg-edu-red/10 text-edu-red px-3 py-1.5 text-[11px] font-semibold rounded-full">
-                              {notion}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Afficher les points clés si disponibles */}
-                    {ficheData.synthese.pointsCles && ficheData.synthese.pointsCles.length > 0 && (
-                      <div className="mb-8">
-                        <h4 className="text-[10px] font-bold text-edu-dark uppercase tracking-widest mb-4">Points clés à retenir</h4>
-                        <ul className="space-y-2">
-                          {ficheData.synthese.pointsCles.map((point, i) => (
-                            <li key={i} className="flex gap-3 text-sm text-edu-black">
-                              <span className="text-edu-red font-bold">✓</span>
-                              <span>{point}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-
-                    {/* Afficher les idées importantes si disponibles */}
-                    {ficheData.synthese.ideesImportantes && (
-                      <div className="mb-8">
-                        <h4 className="text-[10px] font-bold text-edu-dark uppercase tracking-widest mb-4">Idées importantes</h4>
-                        <p className="text-sm text-edu-black leading-relaxed">{ficheData.synthese.ideesImportantes}</p>
-                      </div>
-                    )}
-
-                    {/* Contenu éditable additionnelle */}
-                    {ficheData.synthese.content && (
-                      <div className="border-t border-edu-light/50 pt-6">
-                        <h4 className="text-[10px] font-bold text-edu-dark uppercase tracking-widest mb-4">Contenu détaillé</h4>
-                        <RichTextEditor
-                          content={ficheData.synthese.content}
-                          onChange={(html) => updateFicheData(['synthese', 'content'], html)}
-                        />
-                      </div>
-                    )}
-                  </div>
-
-                  <div id="evaluation" className={`relative group p-6 border-2 transition-all ${activeSection === 'evaluation' ? 'border-edu-black bg-edu-light/5' : 'border-transparent hover:border-edu-light/50'
-                    }`} onClick={() => setActiveSection('evaluation')}>
-                    <h3 className="text-xs font-bold text-edu-black uppercase tracking-[0.2em] mb-8 flex items-center gap-4">
+                    <h3 className="text-xs font-bold text-edu-black uppercase tracking-[0.2em] mt-8 mb-4 flex items-center gap-4">
                       <span className="bg-edu-black text-white w-6 h-6 flex items-center justify-center text-[10px]">04</span>
                       ÉVALUATION FORMATIVE
                     </h3>
+                    <RichTextEditor
+                      content={ficheData.evaluationFormative}
+                      onChange={(html) => updateFicheData(['evaluationFormative'], html)}
+                    />
+                  </div>
+                </div>
 
-                    {/* Afficher l'objectif d'évaluation si disponible */}
-                    {ficheData.evaluation.objectifEvaluation && (
-                      <div className="mb-8 p-4 bg-edu-light/20 border border-edu-light/50 rounded-[4px]">
-                        <h4 className="text-[10px] font-bold text-edu-dark uppercase tracking-widest mb-2">Objectif</h4>
-                        <p className="text-sm text-edu-black">{ficheData.evaluation.objectifEvaluation}</p>
-                      </div>
-                    )}
+                {/* PAGE 2 : DOCUMENT ÉLÈVE */}
+                <div id="page2" className={`relative group mb-16 p-8 border-t-8 border-edu-black pt-16 transition-all ${activeSection === 'page2' ? 'bg-edu-light/5' : ''
+                  }`} onClick={() => setActiveSection('page2')}>
+                  <h2 className="text-xl font-bold text-center underline mb-12">PAGE 2 : DOCUMENT ÉLÈVE</h2>
 
-                    {/* Afficher les questions si disponibles */}
-                    {ficheData.evaluation.questions && ficheData.evaluation.questions.length > 0 && (
-                      <div className="mb-8">
-                        <h4 className="text-[10px] font-bold text-edu-dark uppercase tracking-widest mb-4">Questions</h4>
-                        <div className="space-y-4">
-                          {ficheData.evaluation.questions.map((q, i) => (
-                            <div key={i} className="border border-edu-light/50 p-4 rounded-[2px]">
-                              <div className="flex items-start gap-3 mb-2">
-                                <span className="bg-edu-black text-white w-6 h-6 min-w-6 flex items-center justify-center text-[10px] font-bold rounded-full">{q.numero}</span>
-                                <div className="flex-1">
-                                  <p className="text-sm text-edu-black font-semibold">{q.question}</p>
-                                  <p className="text-[10px] text-edu-dark mt-1 italic">Type: {q.typeQuestion}</p>
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Afficher les critères d'évaluation si disponibles */}
-                    {ficheData.evaluation.critereEvaluation && ficheData.evaluation.critereEvaluation.length > 0 && (
-                      <div className="mb-8">
-                        <h4 className="text-[10px] font-bold text-edu-dark uppercase tracking-widest mb-4">Critères d'évaluation</h4>
-                        <ul className="space-y-2">
-                          {ficheData.evaluation.critereEvaluation.map((crit, i) => (
-                            <li key={i} className="flex gap-3 text-sm text-edu-black">
-                              <span className="text-edu-red font-bold">●</span>
-                              <span>{crit}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-
-                    {/* Afficher les réponses attendues si disponibles */}
-                    {ficheData.evaluation.corrige?.reponsesAttendues && ficheData.evaluation.corrige.reponsesAttendues.length > 0 && (
-                      <div className="mb-8 p-4 bg-edu-red/5 border border-edu-red/30 rounded-[4px]">
-                        <h4 className="text-[10px] font-bold text-edu-red uppercase tracking-widest mb-4">Réponses attendues / Corrigé</h4>
-                        <div className="space-y-3">
-                          {ficheData.evaluation.corrige.reponsesAttendues.map((rep, i) => (
-                            <div key={i} className="text-sm text-edu-black">
-                              <span className="font-semibold text-edu-red">Q{i + 1}: </span>
-                              <span>{rep}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Contenu éditable additionnel */}
-                    {ficheData.evaluation.content && (
-                      <div className="border-t border-edu-light/50 pt-6">
-                        <h4 className="text-[10px] font-bold text-edu-dark uppercase tracking-widest mb-4">Contenu supplémentaire</h4>
-                        <RichTextEditor
-                          content={ficheData.evaluation.content}
-                          onChange={(html) => updateFicheData(['evaluation', 'content'], html)}
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-1 gap-4">
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-bold uppercase tracking-widest">Activité</label>
+                        <input
+                          type="text"
+                          value={ficheData.documentEleve.activite}
+                          onChange={(e) => updateFicheData(['documentEleve', 'activite'], e.target.value)}
+                          className="w-full bg-transparent border-b border-edu-light/50 focus:border-edu-red outline-none py-1 text-sm transition-colors"
                         />
                       </div>
-                    )}
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-bold uppercase tracking-widest">Objectif Général</label>
+                        <input
+                          type="text"
+                          value={ficheData.documentEleve.objectifGeneral}
+                          onChange={(e) => updateFicheData(['documentEleve', 'objectifGeneral'], e.target.value)}
+                          className="w-full bg-transparent border-b border-edu-light/50 focus:border-edu-red outline-none py-1 text-sm transition-colors"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-bold uppercase tracking-widest">Consigne</label>
+                        <input
+                          type="text"
+                          value={ficheData.documentEleve.consigne}
+                          onChange={(e) => updateFicheData(['documentEleve', 'consigne'], e.target.value)}
+                          className="w-full bg-transparent border-b border-edu-light/50 focus:border-edu-red outline-none py-1 text-sm transition-colors"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-4 pt-4">
+                      <label className="text-[10px] font-bold uppercase tracking-widest">ORIENTATION / CONTEXTE</label>
+                      <RichTextEditor
+                        content={ficheData.documentEleve.texte}
+                        onChange={(html) => updateFicheData(['documentEleve', 'texte'], html)}
+                      />
+
+                      <label className="text-[10px] font-bold uppercase tracking-widest block mt-4">SUPPORTS DE TRAVAIL</label>
+                      <RichTextEditor
+                        content={ficheData.documentEleve.support}
+                        onChange={(html) => updateFicheData(['documentEleve', 'support'], html)}
+                      />
+
+                      <label className="text-[10px] font-bold uppercase tracking-widest block mt-4">TRAVAIL À FAIRE</label>
+                      <RichTextEditor
+                        content={ficheData.documentEleve.taches}
+                        onChange={(html) => updateFicheData(['documentEleve', 'taches'], html)}
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-8 pt-8">
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-bold uppercase tracking-widest">Travail en groupe</label>
+                        <input
+                          type="text"
+                          value={ficheData.documentEleve.strategie.travailGroupe}
+                          onChange={(e) => updateFicheData(['documentEleve', 'strategie', 'travailGroupe'], e.target.value)}
+                          className="w-full bg-transparent border-b border-edu-light/50 focus:border-edu-red outline-none py-1 text-sm transition-colors"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-bold uppercase tracking-widest">Restitution / Plénière</label>
+                        <input
+                          type="text"
+                          value={ficheData.documentEleve.strategie.pleniere}
+                          onChange={(e) => updateFicheData(['documentEleve', 'strategie', 'pleniere'], e.target.value)}
+                          className="w-full bg-transparent border-b border-edu-light/50 focus:border-edu-red outline-none py-1 text-sm transition-colors"
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                {/* Document Élève */}
-                <div id="document" className={`relative group mb-16 p-6 border-2 transition-all ${activeSection === 'document' ? 'border-edu-black bg-edu-light/5' : 'border-transparent hover:border-edu-light/50'
-                  }`} onClick={() => setActiveSection('document')}>
-                  <h3 className="text-xs font-bold text-edu-black uppercase tracking-[0.2em] mb-8 flex items-center gap-4">
-                    <span className="bg-edu-black text-white w-6 h-6 flex items-center justify-center text-[10px]">05</span>
-                    DOCUMENT ÉLÈVE
-                  </h3>
+                {/* PAGE 3 : FICHE DE SYNTHÈSE */}
+                <div id="page3" className={`relative group p-8 border-t-8 border-edu-red pt-16 transition-all ${activeSection === 'page3' ? 'bg-edu-red/[0.02]' : ''
+                  }`} onClick={() => setActiveSection('page3')}>
+                  <h2 className="text-xl font-bold text-center underline text-edu-red mb-12">PAGE 3 : FICHE DE SYNTHÈSE</h2>
 
-                  <div className="space-y-12">
-                    {/* Mise en situation */}
-                    {ficheData.documentEleve && (
-                      <>
-                        {ficheData.documentEleve.miseEnSituation && (
-                          <div className="border-l-4 border-edu-red pl-6">
-                            <h4 className="text-xs font-bold text-edu-black uppercase tracking-widest mb-4">Mise en situation</h4>
-                            {ficheData.documentEleve.miseEnSituation.contexte && (
-                              <div className="mb-4">
-                                <p className="text-[10px] font-bold text-edu-dark uppercase tracking-widest mb-2">Contexte</p>
-                                <p className="text-sm text-edu-black leading-relaxed">{ficheData.documentEleve.miseEnSituation.contexte}</p>
-                              </div>
-                            )}
-                            {ficheData.documentEleve.miseEnSituation.texte && (
-                              <div>
-                                <p className="text-[10px] font-bold text-edu-dark uppercase tracking-widest mb-2">Texte de mise en situation</p>
-                                <p className="text-sm text-edu-black leading-relaxed bg-white p-4 border border-edu-light/50 rounded-[2px]">{ficheData.documentEleve.miseEnSituation.texte}</p>
-                              </div>
-                            )}
-                          </div>
-                        )}
-
-                        {/* Tâche */}
-                        {ficheData.documentEleve.tache && (
-                          <div className="border-l-4 border-edu-red pl-6">
-                            <h4 className="text-xs font-bold text-edu-black uppercase tracking-widest mb-4">Tâche à réaliser</h4>
-                            {ficheData.documentEleve.tache.enonce && (
-                              <div className="mb-4 p-4 bg-edu-red/5 border border-edu-red/30 rounded-[2px]">
-                                <p className="text-[10px] font-bold text-edu-red uppercase tracking-widest mb-2">Énoncé</p>
-                                <p className="text-base font-semibold text-edu-black">{ficheData.documentEleve.tache.enonce}</p>
-                              </div>
-                            )}
-                            {ficheData.documentEleve.tache.objectif && (
-                              <div>
-                                <p className="text-[10px] font-bold text-edu-dark uppercase tracking-widest mb-2">Objectif</p>
-                                <p className="text-sm text-edu-black">{ficheData.documentEleve.tache.objectif}</p>
-                              </div>
-                            )}
-                          </div>
-                        )}
-
-                        {/* Support pédagogique */}
-                        {ficheData.documentEleve.supportPedagogique && (
-                          <div className="border-l-4 border-edu-red pl-6">
-                            <h4 className="text-xs font-bold text-edu-black uppercase tracking-widest mb-4">Support pédagogique</h4>
-                            {ficheData.documentEleve.supportPedagogique.titre && (
-                              <h5 className="text-sm font-bold text-edu-black mb-3">{ficheData.documentEleve.supportPedagogique.titre}</h5>
-                            )}
-                            {ficheData.documentEleve.supportPedagogique.contenu && (
-                              <div className="bg-white p-6 border border-edu-light/50 rounded-[2px] text-sm text-edu-black leading-relaxed whitespace-pre-wrap">
-                                {ficheData.documentEleve.supportPedagogique.contenu}
-                              </div>
-                            )}
-                          </div>
-                        )}
-
-                        {/* Consignes */}
-                        {ficheData.documentEleve.consignes && Array.isArray(ficheData.documentEleve.consignes) && ficheData.documentEleve.consignes.length > 0 && (
-                          <div className="border-l-4 border-edu-red pl-6">
-                            <h4 className="text-xs font-bold text-edu-black uppercase tracking-widest mb-4">Consignes</h4>
-                            <ol className="space-y-3">
-                              {ficheData.documentEleve.consignes.map((consigne, i) => (
-                                <li key={i} className="flex gap-4 text-sm text-edu-black">
-                                  <span className="bg-edu-black text-white w-6 h-6 min-w-6 flex items-center justify-center text-[10px] font-bold rounded-full">{i + 1}</span>
-                                  <span className="pt-0.5">{consigne}</span>
-                                </li>
-                              ))}
-                            </ol>
-                          </div>
-                        )}
-                      </>
-                    )}
+                  <div className="space-y-8">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-edu-red">Contenu de la synthèse (Zone 1)</label>
+                      <RichTextEditor
+                        content={ficheData.ficheSynthese.point1}
+                        onChange={(html) => updateFicheData(['ficheSynthese', 'point1'], html)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-edu-red">Contenu de la synthèse (Zone 2)</label>
+                      <RichTextEditor
+                        content={ficheData.ficheSynthese.point2}
+                        onChange={(html) => updateFicheData(['ficheSynthese', 'point2'], html)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-edu-red">Contenu de la synthèse (Zone 3)</label>
+                      <RichTextEditor
+                        content={ficheData.ficheSynthese.point3}
+                        onChange={(html) => updateFicheData(['ficheSynthese', 'point3'], html)}
+                      />
+                    </div>
                   </div>
                 </div>
 
-                {/* Fiche de synthèse finale */}
-                <div id="fiche" className={`relative group p-6 border-2 transition-all ${activeSection === 'fiche' ? 'border-edu-red/50 bg-edu-red/[0.02]' : 'border-edu-red/20 bg-edu-red/[0.02]'
-                  }`} onClick={() => setActiveSection('fiche')}>
-                  <h3 className="text-xs font-bold text-edu-red uppercase tracking-[0.2em] mb-8 flex items-center gap-4">
-                    <span className="bg-edu-red text-white w-6 h-6 flex items-center justify-center text-[10px]">06</span>
-                    FICHE DE SYNTHÈSE (CORRIGÉ)
-                  </h3>
-                  <RichTextEditor
-                    content={ficheData.ficheSynthese.content}
-                    onChange={(html) => updateFicheData(['ficheSynthese', 'content'], html)}
-                  />
+                {/* PAGE 4 : ÉVALUATION FORMATIVE */}
+                <div id="page4" className={`relative group p-8 border-t-8 border-edu-black pt-16 transition-all shadow-sm ${activeSection === 'page4' ? 'bg-edu-light/5' : ''
+                  }`} onClick={() => setActiveSection('page4')}>
+                  <h2 className="text-xl font-bold text-center underline mb-12">PAGE 4 : ÉVALUATION FORMATIVE</h2>
+                  <div className="space-y-4">
+                    <label className="text-[10px] font-bold uppercase tracking-widest block">Contenu de l'évaluation</label>
+                    <RichTextEditor
+                      content={ficheData.evaluationFormative}
+                      onChange={(html) => updateFicheData(['evaluationFormative'], html)}
+                    />
+                  </div>
                 </div>
+
+                {/* EXTRA PAGES */}
+                {(ficheData.extraPages || []).map((page, index) => (
+                   <div key={page.id} id={page.id} className={`relative group p-8 border-t-8 border-edu-light pt-16 transition-all ${activeSection === page.id ? 'bg-edu-light/10' : ''
+                  }`} onClick={() => setActiveSection(page.id)}>
+                    <div className="flex justify-between items-center mb-12">
+                      <button
+                         onClick={(e) => deleteSection(page.id, e)}
+                         className="p-2 text-red-500 hover:bg-red-50 rounded"
+                      >
+                         <Trash2 size={18} />
+                      </button>
+                      <input
+                        type="text"
+                        value={page.title}
+                        onChange={(e) => {
+                          const newPages = [...(ficheData.extraPages || [])];
+                          newPages[index] = { ...newPages[index], title: e.target.value };
+                          updateFicheData(['extraPages'], newPages);
+
+                          // Update sidebar label too
+                          setSections(sections.map(s => s.id === page.id ? { ...s, label: e.target.value } : s));
+                        }}
+                        className="text-xl font-bold text-center underline uppercase outline-none bg-transparent focus:text-edu-red transition-colors"
+                      />
+                      <button 
+                        onClick={(e) => deleteSection(page.id, e)}
+                        className="p-2 text-edu-red hover:bg-edu-red/10 rounded-full transition-all"
+                      >
+                        <Trash2 size={20} />
+                      </button>
+                    </div>
+
+                    <div className="space-y-4">
+                      <textarea
+                        value={page.content}
+                        onChange={(e) => {
+                          const newPages = [...(ficheData.extraPages || [])];
+                          newPages[index] = { ...newPages[index], content: e.target.value };
+                          updateFicheData(['extraPages'], newPages);
+                        }}
+                        className="w-full bg-white border border-edu-light/50 focus:border-edu-red outline-none p-4 text-sm min-h-[400px] transition-colors shadow-inner"
+                        placeholder="Contenu de votre page personnalisée..."
+                      />
+                    </div>
+                  </div>
+                ))}
+
               </div>
             </div>
           </div>
         </main>
+
 
         {/* AI Assistant Slide-out Panel */}
         <AnimatePresence>

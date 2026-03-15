@@ -44,16 +44,21 @@ export default function DocumentUpload() {
     try {
       const reader = new FileReader();
       reader.onload = async (e) => {
-        const base64 = e.target?.result as string;
-        const analysis = await deepseekAIService.analyzeDocument(base64, file.type);
-        setDetectedInfo(analysis);
-        toast.success('Document analysé par Deepseek avec succès !');
+        try {
+          const base64 = e.target?.result as string;
+          const analysis = await deepseekAIService.analyzeDocument(base64, file.type);
+          setDetectedInfo(analysis);
+          toast.success('Document analysé par Deepseek avec succès !');
+        } catch (err) {
+          toast.error("Échec de l'analyse du document.");
+        } finally {
+          setIsAnalyzing(false);
+        }
       };
       reader.readAsDataURL(file);
     } catch (error) {
-      console.error("Erreur analyse document:", error);
-      toast.error("Échec de l'analyse du document.");
-    } finally {
+      console.error("Erreur lecture fichier:", error);
+      toast.error("Échec de la lecture du fichier.");
       setIsAnalyzing(false);
     }
   };
@@ -73,69 +78,62 @@ export default function DocumentUpload() {
     }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!detectedInfo) return;
     
-    const ficheContent = {
-      id: Date.now().toString(),
-      titre: detectedInfo.titre || detectedInfo.title || "Fiche importée",
-      enTete: {
-        matiere: detectedInfo.matiere || detectedInfo.subject || "Non spécifié",
-        classe: detectedInfo.classe || detectedInfo.class || "Non spécifié",
-        theme: detectedInfo.titre || detectedInfo.title || detectedInfo.theme || "Import",
-        temps: detectedInfo.dureeTotale || "1H",
-        objectif: detectedInfo.objectifGeneral || detectedInfo.theme || "",
-        date: new Date().toLocaleDateString('fr-FR')
-      },
-      miseEnSituation: {
-        rappel: "",
-        prerequis: detectedInfo.preRequis || [],
-        motivation: ""
-      },
-      sequences: (detectedInfo.sequences || []).map((seq: any, idx: number) => ({
-        id: `seq-${Date.now()}-${idx}`,
-        numero: seq.numero || String.fromCharCode(65 + idx),
-        objectif: seq.objectif || "",
-        taches: seq.taches || "",
-        organisations: seq.organisations || ["TI"],
-        savoirs: seq.savoirs || "",
-        duree: seq.duree || "10 min"
-      })),
-      documentEleve: {
-        title: "Document élève",
-        contenu: "",
-        schema: null,
-        formules: [],
-        taches: detectedInfo.materiel || []
-      },
-      synthese: {
-        title: "Synthèse",
-        content: ""
-      },
-      evaluation: {
-        title: "Évaluation",
-        content: ""
-      },
-      ficheSynthese: {
-        title: "Corrigé",
-        content: ""
-      }
-    };
+    try {
+      const ficheContent: any = {
+        id: '', // Sera généré par la DB
+        titre: detectedInfo.titre || detectedInfo.title || "Fiche importée",
+        numeroFiche: "",
+        enTete: {
+          matiere: detectedInfo.matiere || detectedInfo.subject || "Non spécifié",
+          classe: detectedInfo.classe || detectedInfo.class || "Non spécifié",
+          theme: detectedInfo.titre || detectedInfo.title || detectedInfo.theme || "Import",
+          temps: detectedInfo.dureeTotale || "1H",
+          objectifGeneral: detectedInfo.objectifGeneral || detectedInfo.theme || "",
+          date: new Date().toLocaleDateString('fr-FR')
+        },
+        miseEnSituation: {
+          rappel: "",
+          prerequis: Array.isArray(detectedInfo.preRequis) ? detectedInfo.preRequis.join(', ') : (detectedInfo.preRequis || ""),
+          motivation: ""
+        },
+        sequences: (detectedInfo.sequences || []).map((seq: any, idx: number) => ({
+          id: `seq-${Date.now()}-${idx}`,
+          numero: seq.numero || String.fromCharCode(65 + idx),
+          objectif: seq.objectif || "",
+          taches: seq.taches || "",
+          organisations: Array.isArray(seq.organisations) ? seq.organisations.join(', ') : (seq.organisations || ""),
+          savoirs: seq.savoirs || "",
+          materiel: seq.materiel || "",
+          duree: seq.duree || "10 min"
+        })),
+        syntheseLecon: "",
+        evaluationFormative: "",
+        documentEleve: {
+          activite: "Document élève",
+          objectifGeneral: "",
+          consigne: "",
+          texte: "",
+          support: "",
+          taches: Array.isArray(detectedInfo.materiel) ? detectedInfo.materiel.join('\n') : (detectedInfo.materiel || ""),
+          strategie: { travailGroupe: "Oui", pleniere: "Oui" }
+        },
+        ficheSynthese: {
+          point1: "",
+          point2: "",
+          point3: ""
+        }
+      };
 
-    const newFiche = {
-      id: ficheContent.id,
-      title: ficheContent.titre,
-      subject: ficheContent.enTete.matiere,
-      class: ficheContent.enTete.classe,
-      date: ficheContent.enTete.date,
-      tags: ["Import", "IA"],
-      progress: 100,
-      content: ficheContent
-    };
-
-    storageService.saveFiche(newFiche);
-    toast.success('Fiche générée à partir du document !');
-    navigate(`/dashboard/editor/${newFiche.id}`);
+      const savedId = await storageService.saveFiche(ficheContent);
+      toast.success('Fiche générée à partir du document !');
+      navigate(`/dashboard/editor/${savedId}`);
+    } catch (error) {
+       console.error(error);
+       toast.error('Erreur lors de la création de la fiche');
+    }
   };
 
   return (
@@ -253,16 +251,16 @@ export default function DocumentUpload() {
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="flex flex-col gap-1">
+                    <label className="text-[10px] uppercase tracking-widest text-edu-dark font-mono ml-1">Titre détecté</label>
+                    <input type="text" readOnly value={detectedInfo.titre || detectedInfo.title || "Document"} className="w-full px-3 py-2 bg-[#F5F2ED] border border-edu-light/30 rounded-[2px] outline-none text-sm" />
+                  </div>
+                  <div className="flex flex-col gap-1">
                     <label className="text-[10px] uppercase tracking-widest text-edu-dark font-mono ml-1">Matière</label>
-                    <input type="text" defaultValue={detectedInfo.titre || detectedInfo.title || detectedInfo.subject} className="w-full px-3 py-2 bg-[#F5F2ED] border border-edu-light/30 rounded-[2px] outline-none focus:border-edu-red text-sm" />
+                    <input type="text" readOnly value={detectedInfo.matiere || detectedInfo.subject || "Détection..."} className="w-full px-3 py-2 bg-[#F5F2ED] border border-edu-light/30 rounded-[2px] outline-none text-sm" />
                   </div>
                   <div className="flex flex-col gap-1">
                     <label className="text-[10px] uppercase tracking-widest text-edu-dark font-mono ml-1">Classe</label>
-                    <input type="text" defaultValue={detectedInfo.classe || detectedInfo.class} className="w-full px-3 py-2 bg-[#F5F2ED] border border-edu-light/30 rounded-[2px] outline-none focus:border-edu-red text-sm" />
-                  </div>
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[10px] uppercase tracking-widest text-edu-dark font-mono ml-1">Objectif</label>
-                    <input type="text" defaultValue={detectedInfo.objectifGeneral || detectedInfo.theme} className="w-full px-3 py-2 bg-[#F5F2ED] border border-edu-light/30 rounded-[2px] outline-none focus:border-edu-red text-sm" />
+                    <input type="text" readOnly value={detectedInfo.classe || detectedInfo.class || "Détection..."} className="w-full px-3 py-2 bg-[#F5F2ED] border border-edu-light/30 rounded-[2px] outline-none text-sm" />
                   </div>
                 </div>
               </div>

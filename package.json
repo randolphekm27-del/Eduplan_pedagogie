@@ -11,12 +11,12 @@
     "lint": "tsc --noEmit"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.38.0",
-    "openai": "^4.52.0",
     "@anthropic-ai/sdk": "^0.28.0",
     "@google/genai": "^1.45.0",
+    "@supabase/supabase-js": "^2.38.0",
     "@tailwindcss/vite": "^4.1.14",
     "@tiptap/extension-color": "^3.20.1",
+    "@tiptap/extension-font-family": "^3.20.1",
     "@tiptap/extension-highlight": "^3.20.1",
     "@tiptap/extension-image": "^3.20.1",
     "@tiptap/extension-link": "^3.20.1",
@@ -41,6 +41,7 @@
     "html2pdf.js": "^0.14.0",
     "lucide-react": "^0.546.0",
     "motion": "^12.23.24",
+    "openai": "^4.52.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-router-dom": "^7.13.1",
