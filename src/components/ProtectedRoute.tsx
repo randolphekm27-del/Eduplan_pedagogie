@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
@@ -12,6 +12,25 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     requiredRole
 }) => {
     const { user, profile, loading } = useAuth();
+    // FIX Bug #3: Escape hatch — if profile never loads after 30s, redirect to login
+    // instead of spinning forever (prevents infinite loop on network errors or RLS failure).
+    const [profileTimedOut, setProfileTimedOut] = useState(false);
+    const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    useEffect(() => {
+        if (user && !profile && !loading) {
+            timerRef.current = setTimeout(() => {
+                console.warn("ProtectedRoute: Profile load timeout — redirecting to /login");
+                setProfileTimedOut(true);
+            }, 30000);
+        } else {
+            if (timerRef.current) clearTimeout(timerRef.current);
+            setProfileTimedOut(false);
+        }
+        return () => {
+            if (timerRef.current) clearTimeout(timerRef.current);
+        };
+    }, [user, profile, loading]);
 
     // Afficher un loader uniquement pendant le chargement initial du contexte
     if (loading) {
@@ -28,6 +47,12 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     // Rediriger vers login si pas connecté (et qu'on ne charge plus)
     if (!user) {
         console.log("ProtectedRoute: No user found, redirecting to /login");
+        return <Navigate to="/login" replace />;
+    }
+
+    // FIX Bug #3: Redirect to login if profile load timed out after 30s
+    if (profileTimedOut) {
+        console.warn("ProtectedRoute: Profile never loaded, redirecting to /login");
         return <Navigate to="/login" replace />;
     }
 

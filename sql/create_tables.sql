@@ -12,8 +12,8 @@ create extension if not exists "uuid-ossp";
 create table if not exists public.user_profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   email text not null unique,
-  firstName text not null,
-  lastName text not null,
+  firstname text not null,
+  lastname text not null,
   role text check (role in ('teacher', 'student', 'admin')) default 'teacher' not null,
   avatar_url text,
   bio text,
@@ -29,6 +29,57 @@ create table if not exists public.user_profiles (
 create index if not exists user_profiles_email_idx on public.user_profiles(email);
 create index if not exists user_profiles_role_idx on public.user_profiles(role);
 create index if not exists user_profiles_created_at_idx on public.user_profiles(created_at);
+
+-- ============================================================================
+-- TRIGGER: Création automatique du profil utilisateur
+-- Description: Crée automatiquement un profil quand un utilisateur est inscrit
+-- ============================================================================
+create or replace function public.handle_new_user()
+returns trigger as $$
+declare
+  first_name text;
+  last_name text;
+  user_role text;
+begin
+  -- Récupérer les métadonnées de l'utilisateur
+  first_name := coalesce(new.raw_user_meta_data->>'firstName', new.raw_user_meta_data->>'firstname', 'Utilisateur');
+  last_name := coalesce(new.raw_user_meta_data->>'lastName', new.raw_user_meta_data->>'lastname', '');
+  user_role := coalesce(new.raw_user_meta_data->>'role', 'teacher');
+
+  -- Insérer le profil utilisateur
+  insert into public.user_profiles (
+    id,
+    email,
+    firstname,
+    lastname,
+    role,
+    created_at,
+    updated_at
+  )
+  values (
+    new.id,
+    new.email,
+    first_name,
+    last_name,
+    user_role,
+    now(),
+    now()
+  )
+  on conflict (id) do update set
+    firstname = excluded.firstname,
+    lastname = excluded.lastname,
+    role = excluded.role,
+    updated_at = now();
+
+  return new;
+end;
+$$ language plpgsql security definer;
+
+-- Créer le trigger
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute procedure public.handle_new_user();
 
 -- ============================================================================
 -- TABLE: pedagogical_sheets

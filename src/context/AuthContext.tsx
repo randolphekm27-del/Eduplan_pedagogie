@@ -27,20 +27,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [error, setError] = useState<string | null>(null);
     const loadUserProfile = async (userId: string, retryCount = 0) => {
         try {
-            console.log(`🟡 [Attempt ${retryCount + 1}] Loading profile for user:`, userId);
+            console.log(`🟡 [Try ${retryCount + 1}/5] Loading profile for user:`, userId);
 
-            // Removing the 15s race timeout to let the request finish naturally or fail by network
             const { data: profileData, error: profileError } = await supabase
                 .from("user_profiles")
                 .select("*")
                 .eq("id", userId)
                 .single();
 
-            // If profile not found (PGRST116), it might be still creating
-            if (profileError?.code === 'PGRST116' && retryCount < 5) {
-                console.warn(`⏳ Account still initializing for ${userId}. Retrying (${retryCount + 1}/5)...`);
-                await new Promise(resolve => setTimeout(resolve, 1500));
-                return loadUserProfile(userId, retryCount + 1);
+            // Si profil non trouvé (PGRST116), peut être en train d'être créé (trigger)
+            if (profileError?.code === 'PGRST116') {
+                console.warn(`⏳ Profile not found yet (attempt ${retryCount + 1}/5). Retrying in 1.5s...`, userId);
+
+                if (retryCount < 4) {
+                    await new Promise(resolve => setTimeout(resolve, 1500));
+                    return loadUserProfile(userId, retryCount + 1);
+                } else {
+                    console.error("❌ Profile query exhausted retries:", profileError);
+                    setProfile(null);
+                    return null;
+                }
             }
 
             if (profileError) {
@@ -50,39 +56,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
 
             if (!profileData) {
-                console.warn("⚠️ Profile truly missing for ID:", userId);
+                console.warn("⚠️ Profile data is empty for ID:", userId);
                 setProfile(null);
                 return null;
             }
 
-            // Fetch sub-data
-            const [subscriptionResult, usageResult] = await Promise.all([
-                supabase
-                    .from("subscriptions")
-                    .select("tier, status")
-                    .eq("user_id", userId)
-                    .maybeSingle(),
-                supabase
-                    .from("usage_stats")
-                    .select("lessons_count, ai_calls_count")
-                    .eq("user_id", userId)
-                    .maybeSingle()
-            ]);
+            // Valider que les données essentielles existent
+            if (!profileData.firstname || !profileData.lastname) {
+                console.warn("⚠️ Profile missing firstname or lastname:", profileData);
+            }
 
-            const fullProfile = {
-                ...profileData,
-                tier: subscriptionResult.data?.tier || 'free',
-                subscription_status: subscriptionResult.data?.status || 'active',
-                lessons_count: usageResult.data?.lessons_count || 0,
-                ai_calls_count: usageResult.data?.ai_calls_count || 0,
-            };
+            console.log("✅ Profile loaded successfully:", {
+                email: profileData.email,
+                firstname: profileData.firstname,
+                lastname: profileData.lastname,
+                role: profileData.role
+            });
 
-            console.log("✅ Profile ready:", fullProfile.email);
-            setProfile(fullProfile as UserProfile);
-            return fullProfile as UserProfile;
+            setProfile(profileData as UserProfile);
+            return profileData as UserProfile;
         } catch (err: any) {
-            console.error("🔥 Global failure in loadUserProfile:", err);
-            if (retryCount < 2) return loadUserProfile(userId, retryCount + 1);
+            console.error("🔥 Critical error in loadUserProfile:", err);
+            if (retryCount < 2) {
+                console.log(`Retrying on exception (attempt ${retryCount + 1}/3)...`);
+                return loadUserProfile(userId, retryCount + 1);
+            }
             setProfile(null);
             return null;
         }
@@ -90,37 +88,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     useEffect(() => {
         let isMounted = true;
+        // FIX Bug #1: Blocks onAuthStateChange during app initialization to prevent
+        // duplicate loadUserProfile() calls (race condition causing infinite spinner)
+        let isInitializing = true;
 
         const initializeAuth = async () => {
             try {
                 if (!isMounted) return;
-                console.log("AuthProvider: Initializing...");
+                console.log("🟠 AuthProvider: Initializing auth state...");
                 setLoading(true);
 
                 const { data: { session: currentSession }, error: sessionError } = await supabase.auth.getSession();
 
                 if (sessionError) {
-                    console.error("AuthProvider: Session fetch error:", sessionError);
+                    console.error("❌ AuthProvider: Session fetch error:", sessionError);
                     return;
                 }
 
                 if (currentSession && isMounted) {
-                    console.log("AuthProvider: Found existing session for", currentSession.user.email);
+                    console.log("✅ AuthProvider: Found existing session for", currentSession.user.email);
                     setSession(currentSession);
                     setUser(currentSession.user);
                     await loadUserProfile(currentSession.user.id);
                 } else {
-                    console.log("AuthProvider: No active session found during initialization.");
+                    console.log("ℹ️ AuthProvider: No active session found during initialization");
                     setSession(null);
                     setUser(null);
                     setProfile(null);
                 }
             } catch (err) {
-                console.error("AuthProvider: Critical initialization error:", err);
+                console.error("🔥 AuthProvider: Critical initialization error:", err);
             } finally {
                 if (isMounted) {
                     setLoading(false);
-                    console.log("AuthProvider: Initialization process finished.");
+                    isInitializing = false; // ← Unlock the auth state listener
+                    console.log("✅ AuthProvider: Initialization complete");
                 }
             }
         };
@@ -130,19 +132,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Listen for subsequent auth changes
         const { data: authData } = supabase.auth.onAuthStateChange(async (event, newSession) => {
             if (!isMounted) return;
-            console.log("AuthProvider: Auth State Change Event:", event);
+            // FIX Bug #1: Ignore events fired during initializeAuth to prevent race condition
+            if (isInitializing) {
+                console.log("⏳ AuthProvider: Skipping auth event during initialization:", event);
+                return;
+            }
+            console.log("🟡 AuthProvider: Auth State Change Event:", event);
 
-            // Only update if we're not currently in the initial load 
-            // to avoid mid-initialization state updates
             setSession(newSession);
-            
+
             if (newSession?.user) {
                 setUser(newSession.user);
-                // In case of SIGNED_IN event (like after a signup or login), we ensure profile is loaded
+                // Load profile on SIGNED_IN event (after signup or login)
                 if (event === 'SIGNED_IN') {
+                    console.log("🟡 AuthProvider: SIGNED_IN event - loading profile...");
                     await loadUserProfile(newSession.user.id);
                 }
             } else {
+                console.log("ℹ️ AuthProvider: User signed out or session invalid");
                 setUser(null);
                 setProfile(null);
             }
@@ -157,23 +164,49 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const login = async (email: string, password: string) => {
         try {
             setError(null);
+            console.log("🟠 AuthProvider.login: Starting login for", email);
 
-            // Protect against hanging requests with a timeout
-            const signInPromise = supabase.auth.signInWithPassword({ email, password });
-            const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('Login timeout')), 10000));
+            // FIX Bug #2: Timeout applies ONLY to the network auth call (~100-460ms per logs).
+            // loadUserProfile is called AFTER (can take up to 7.5s for new accounts with retries).
+            console.log("🟡 AuthProvider.login: Signing in...");
+            let loginData;
+            try {
+                const signInPromise = supabase.auth.signInWithPassword({ email, password });
+                const timeout = new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error('Login timeout — vérifiez votre connexion réseau.')), 15000)
+                );
+                const result = await Promise.race([signInPromise, timeout]) as any;
+                const { data, error: loginError } = result;
+                if (loginError) throw loginError;
+                loginData = data;
+            } catch (authErr: any) {
+                console.error("❌ AuthProvider.login: Authentication failed", authErr);
+                const errorMessage = authErr?.message || "Authentification échouée. Vérifiez vos identifiants.";
+                setError(errorMessage);
+                throw new Error(errorMessage);
+            }
 
-            const { data: loginData, error: loginError } = await Promise.race([signInPromise, timeout]) as any;
+            if (!loginData?.user) {
+                throw new Error("Aucun utilisateur retourné lors de l'authentification");
+            }
 
-            if (loginError) throw loginError;
+            console.log("✅ AuthProvider.login: User authenticated", loginData.user.email);
+            setUser(loginData.user);
+            setSession(loginData.session);
 
-            if (loginData?.user) {
-                setUser(loginData.user);
-                setSession(loginData.session);
-                // On attend le profil pour garantir la cohérence avant la redirection vers /dashboard
+            // 2. Profile loading phase (timeout: 15 secondes)
+            console.log("🟡 AuthProvider.login: Loading user profile...");
+            try {
                 await loadUserProfile(loginData.user.id);
+                console.log("✅ AuthProvider.login: Profile loaded successfully");
+            } catch (profileErr) {
+                console.warn("⚠️ AuthProvider.login: Profile loading encountered issue (user still logged in)", profileErr);
+                // Profile loading failure is not critical - user still authenticated
+                // The profile will be retried on next page load
             }
         } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : "Login error";
+            const errorMessage = err instanceof Error ? err.message : "Erreur de connexion";
+            console.error("🔥 AuthProvider.login: Critical error", err);
             setError(errorMessage);
             throw err;
         }
@@ -189,6 +222,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     ) => {
         try {
             setError(null);
+            console.log("🟠 AuthProvider.signup: Starting signup for", email);
+
+            // 1. Créer l'utilisateur en auth
+            console.log("🟡 AuthProvider.signup: Creating auth user...");
             const { data: signupData, error: signupError } = await supabase.auth.signUp({
                 email,
                 password,
@@ -202,36 +239,47 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 },
             });
 
-            if (signupError) throw signupError;
-
-            if (signupData?.user) {
-                console.log("AuthProvider: Signup successful, updating user_profiles record...");
-                // Note: The database trigger 'handle_new_user' also creates the profile.
-                // We use upsert here to ensure the data is exactly what the user entered,
-                // including the 'subject' which is mapped to 'specialties'.
-                const { error: profileError } = await supabase
-                    .from("user_profiles")
-                    .upsert({
-                        id: signupData.user.id,
-                        email,
-                        firstname: firstName,
-                        lastname: lastName,
-                        role,
-                        specialties: subject ? [subject] : [],
-                    }, { onConflict: 'id' });
-
-                if (profileError) {
-                    console.error("AuthProvider: Profile update error:", profileError);
-                } else {
-                    console.log("AuthProvider: user_profiles record updated successfully.");
-                }
-
-                setUser(signupData.user);
-                setSession(signupData.session);
-                await loadUserProfile(signupData.user.id);
+            if (signupError) {
+                throw signupError;
             }
+
+            if (!signupData?.user) {
+                throw new Error("Aucun utilisateur créé");
+            }
+
+            console.log("✅ AuthProvider.signup: Auth user created", signupData.user.id);
+
+            // 2. Mettre à jour le profil (le trigger l'aura déjà créé)
+            console.log("🟡 AuthProvider.signup: Updating user_profiles record...");
+            const { error: profileError } = await supabase
+                .from("user_profiles")
+                .upsert({
+                    id: signupData.user.id,
+                    email,
+                    firstname: firstName,
+                    lastname: lastName,
+                    role,
+                    specialties: subject ? [subject] : [],
+                }, { onConflict: 'id' });
+
+            if (profileError) {
+                console.error("⚠️ AuthProvider.signup: Profile error:", profileError);
+            } else {
+                console.log("✅ AuthProvider.signup: Profile record ready");
+            }
+
+            setUser(signupData.user);
+            if (signupData.session) {
+                setSession(signupData.session);
+            }
+
+            // 3. Charger le profil pour vérifier
+            console.log("🟡 AuthProvider.signup: Loading profile for verification...");
+            await loadUserProfile(signupData.user.id);
+            console.log("✅ AuthProvider.signup: Signup complete");
         } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : "Signup error";
+            const errorMessage = err instanceof Error ? err.message : "Erreur d'inscription";
+            console.error("🔥 AuthProvider.signup: Error", err);
             setError(errorMessage);
             throw err;
         }

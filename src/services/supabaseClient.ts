@@ -4,7 +4,7 @@ const supabaseUrl = (import.meta as any).env.VITE_SUPABASE_URL || '';
 const supabaseAnonKey = (import.meta as any).env.VITE_SUPABASE_ANON_KEY || '';
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.error("Supabase configuration missing! Check your .env file.");
+    console.error("Supabase configuration missing! Check your .env file.");
 }
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
@@ -26,10 +26,15 @@ export interface UserProfile {
     role: 'teacher' | 'student' | 'admin';
     created_at: string;
     updated_at: string;
-    tier: 'free' | 'pro' | 'institution';
-    subscription_status: 'active' | 'expired' | 'cancelled';
-    lessons_count: number;
-    ai_calls_count: number;
+    tier?: 'free' | 'pro' | 'institution';
+    subscription_status?: 'active' | 'expired' | 'cancelled';
+    lessons_count?: number;
+    ai_calls_count?: number;
+    avatar_url?: string;
+    bio?: string;
+    institution?: string;
+    specialties?: string[];
+    is_verified?: boolean;
 }
 
 export const supabaseService = {
