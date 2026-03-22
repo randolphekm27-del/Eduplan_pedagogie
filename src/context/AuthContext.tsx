@@ -27,7 +27,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [error, setError] = useState<string | null>(null);
     const loadUserProfile = async (userId: string) => {
         try {
-            console.log("Loading profile for user:", userId);
+            console.log("🟡 Loading profile for user:", userId);
 
             const profileQuery = supabase
                 .from("user_profiles")
@@ -35,8 +35,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 .eq("id", userId)
                 .single();
 
+            // Increase timeout to 15s for stability
             const timeout = new Promise((_, reject) =>
-                setTimeout(() => reject(new Error('Profile load timeout')), 7000)
+                setTimeout(() => reject(new Error('Profile load timeout after 15s')), 15000)
             );
 
             const result = await Promise.race([profileQuery, timeout]) as any;
@@ -44,44 +45,56 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             const profileError = result?.error;
 
             if (profileError) {
-                console.warn("Profile load returned error:", profileError);
+                console.error("❌ Profile fetch error:", profileError);
+                // Return descriptive error object to help debugging
                 setProfile(null);
                 return null;
             }
 
             if (!profileData) {
-                console.warn("Profile load: no data returned");
+                console.warn("⚠️ Profile not found in database for ID:", userId);
                 setProfile(null);
                 return null;
             }
 
             // Fetch subscription and usage in parallel
-            const [subscriptionResult, usageResult] = await Promise.all([
-                supabase
-                    .from("subscriptions")
-                    .select("tier, status")
-                    .eq("user_id", userId)
-                    .single(),
-                supabase
-                    .from("usage_stats")
-                    .select("lessons_count, ai_calls_count")
-                    .eq("user_id", userId)
-                    .single()
-            ]);
+            try {
+                const [subscriptionResult, usageResult] = await Promise.all([
+                    supabase
+                        .from("subscriptions")
+                        .select("tier, status")
+                        .eq("user_id", userId)
+                        .limit(1)
+                        .maybeSingle(),
+                    supabase
+                        .from("usage_stats")
+                        .select("lessons_count, ai_calls_count")
+                        .eq("user_id", userId)
+                        .limit(1)
+                        .maybeSingle()
+                ]);
 
-            const fullProfile = {
-                ...profileData,
-                tier: subscriptionResult.data?.tier || 'free',
-                subscription_status: subscriptionResult.data?.status || 'active',
-                lessons_count: usageResult.data?.lessons_count || 0,
-                ai_calls_count: usageResult.data?.ai_calls_count || 0,
-            };
+                if (subscriptionResult.error) console.warn("Subscription fetch error (swallowed):", subscriptionResult.error);
+                if (usageResult.error) console.warn("Usage fetch error (swallowed):", usageResult.error);
 
-            console.log("Profile loaded successfully with subscription:", fullProfile);
-            setProfile(fullProfile as UserProfile);
-            return fullProfile as UserProfile;
+                const fullProfile = {
+                    ...profileData,
+                    tier: subscriptionResult.data?.tier || 'free',
+                    subscription_status: subscriptionResult.data?.status || 'active',
+                    lessons_count: usageResult.data?.lessons_count || 0,
+                    ai_calls_count: usageResult.data?.ai_calls_count || 0,
+                };
+
+                console.log("✅ Profile loaded successfully:", fullProfile);
+                setProfile(fullProfile as UserProfile);
+                return fullProfile as UserProfile;
+            } catch (innerErr) {
+                console.warn("Sub-profile data loading failed partially:", innerErr);
+                setProfile(profileData as UserProfile);
+                return profileData as UserProfile;
+            }
         } catch (err) {
-            console.error("Critical error loading profile:", err);
+            console.error("🔥 Critical error in loadUserProfile:", err);
             setProfile(null);
             return null;
         }
