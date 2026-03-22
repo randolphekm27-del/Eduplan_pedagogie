@@ -5,17 +5,11 @@ import { motion } from 'motion/react';
 import { toast } from 'sonner';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
+import { Footer } from '../components/Footer';
 
 import { ThemeToggle } from '../components/ThemeToggle';
 
 export default function LandingPage() {
-  const handleComingSoon = (e: React.MouseEvent) => {
-    e.preventDefault();
-    toast.info('Bientôt disponible', {
-      description: 'Cette section est en cours de développement.'
-    });
-  };
-
   return (
     <div className="min-h-screen bg-edu-bg font-sans text-edu-black selection:bg-edu-red selection:text-edu-bg transition-colors duration-500">
       {/* Header */}
@@ -29,7 +23,7 @@ export default function LandingPage() {
           <nav className="hidden md:flex items-center gap-8">
             <a href="#features" className="text-sm font-medium hover:text-edu-red transition-all duration-200 border-b-2 border-transparent hover:border-edu-red">Fonctionnalités</a>
             <a href="#pricing" className="text-sm font-medium hover:text-edu-red transition-all duration-200 border-b-2 border-transparent hover:border-edu-red">Tarifs</a>
-            <button onClick={handleComingSoon} className="text-sm font-medium hover:text-edu-red transition-all duration-200 border-b-2 border-transparent hover:border-edu-red">Blog</button>
+            <Link to="/blog" className="text-sm font-medium hover:text-edu-red transition-all duration-200 border-b-2 border-transparent hover:border-edu-red">Blog</Link>
             <Link to="/login" className="text-sm font-medium hover:text-edu-red transition-all duration-200 border-b-2 border-transparent hover:border-edu-red">Connexion</Link>
           </nav>
           
@@ -297,29 +291,14 @@ export default function LandingPage() {
                 <li className="flex items-center gap-2"><CheckCircle2 size={16} className="text-edu-red" /> Bibliothèque partagée</li>
                 <li className="flex items-center gap-2"><CheckCircle2 size={16} className="text-edu-red" /> Modèles personnalisés</li>
               </ul>
-              <button onClick={handleComingSoon} className="w-full block text-center border border-edu-light/50 hover:bg-white/5 py-2.5 rounded-[2px] transition-colors">Nous contacter</button>
+              <a href="mailto:contact@eduplan.pro" className="w-full block text-center border border-edu-light/50 hover:bg-white/5 py-2.5 rounded-[2px] transition-colors">Nous contacter</a>
             </div>
           </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="bg-edu-black text-edu-light py-12 border-t border-white/10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-6">
-          <div className="flex items-center gap-2">
-            <Settings className="text-edu-red" size={24} />
-            <span className="font-serif text-xl font-bold text-white">EduPlan</span>
-          </div>
-          <div className="flex gap-6 text-sm">
-            <button onClick={handleComingSoon} className="hover:text-white transition-colors">Mentions légales</button>
-            <button onClick={handleComingSoon} className="hover:text-white transition-colors">CGU</button>
-            <button onClick={handleComingSoon} className="hover:text-white transition-colors">Contact</button>
-          </div>
-          <div className="text-sm opacity-60">
-            © {new Date().getFullYear()} EduPlan. Tous droits réservés.
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

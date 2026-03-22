@@ -38,13 +38,6 @@ export default function Dashboard() {
     navigate(`/dashboard/editor/${ficheId}`);
   };
 
-  const handleComingSoon = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    toast.info('Bientôt disponible', {
-      description: 'Cette fonctionnalité est en cours de développement.'
-    });
-  };
-
   // Filtrer les fiches selon la recherche
   const filteredFiches = fiches.filter(fiche =>
     fiche.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -141,7 +134,7 @@ export default function Dashboard() {
                 whileHover={{ y: -4 }}
                 className="bg-white border border-edu-light/50 p-6 rounded-[2px] shadow-sm hover:shadow-md hover:border-edu-light transition-all cursor-pointer group relative"
               >
-                <button onClick={handleComingSoon} className="absolute top-4 right-4 text-edu-light hover:text-edu-black opacity-0 group-hover:opacity-100 transition-opacity">
+                <button onClick={(e) => { e.stopPropagation(); navigate('/dashboard/library'); }} className="absolute top-4 right-4 text-edu-light hover:text-edu-black opacity-0 group-hover:opacity-100 transition-opacity" title="Plus d'options">
                   <MoreVertical size={18} />
                 </button>
                 <div className="flex gap-2 mb-3">
