@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate, useLocation, Navigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Settings, Mail, Lock, User, ChevronRight, Loader2, BookOpen } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'sonner';
@@ -8,7 +8,7 @@ import { useAuth } from '../context/AuthContext';
 export default function AuthPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, profile, loading, login, signup } = useAuth();
+  const { user, profile, loading, login, signup, refreshProfile } = useAuth();
 
   // Redirect to dashboard if already logged in and profile is ready
   useEffect(() => {
@@ -16,6 +16,14 @@ export default function AuthPage() {
        navigate('/dashboard', { replace: true });
     }
   }, [user, profile, loading, navigate, location.pathname]);
+
+  useEffect(() => {
+    if (!loading && user && !profile) {
+      refreshProfile().catch((err) => {
+        console.warn('AuthPage: profile refresh failed', err);
+      });
+    }
+  }, [user, profile, loading, refreshProfile]);
 
   // Default to login mode if not on /signup path explicitly
   const [isLogin, setIsLogin] = useState(location.pathname !== '/signup');
@@ -88,6 +96,27 @@ export default function AuthPage() {
   const toggleMode = () => {
     navigate(isLogin ? '/signup' : '/login');
   };
+
+  if (!loading && user && !profile) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-edu-bg px-6">
+        <div className="max-w-md w-full bg-white border border-edu-light rounded-[4px] shadow-xl p-8 text-center">
+          <div className="w-14 h-14 border-4 border-edu-red/20 border-t-edu-red rounded-full animate-spin mx-auto mb-6"></div>
+          <h1 className="font-serif text-3xl text-edu-black mb-3">Connexion en cours de finalisation</h1>
+          <p className="text-edu-dark mb-6">
+            Votre session est ouverte. Nous recuperons maintenant votre profil pour ouvrir votre espace sans boucle de redirection.
+          </p>
+          <button
+            type="button"
+            onClick={() => refreshProfile()}
+            className="w-full bg-edu-red text-white py-3 rounded-[4px] font-bold hover:bg-[#5a0808] transition-all"
+          >
+            Reessayer maintenant
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex bg-edu-bg font-sans text-edu-black selection:bg-edu-red selection:text-edu-bg">

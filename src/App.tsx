@@ -25,6 +25,7 @@ const Settings = lazy(() => import('./pages/Settings'));
 const Profile = lazy(() => import('./pages/Profile'));
 const Library = lazy(() => import('./pages/Library'));
 const Pricing = lazy(() => import('./pages/Pricing'));
+const CheckoutSuccess = lazy(() => import('./pages/CheckoutSuccess'));
 const Features = lazy(() => import('./pages/Features'));
 const WhatsNew = lazy(() => import('./pages/WhatsNew'));
 const Blog = lazy(() => import('./pages/Blog'));
@@ -43,7 +44,6 @@ const PageLoader = () => (
   </div>
 );
 
-
 export default function App() {
   return (
     <>
@@ -54,14 +54,12 @@ export default function App() {
             <Router>
               <Suspense fallback={<PageLoader />}>
                 <Routes>
-                <Route path="/" element={<LandingPage />} />
-                <Route path="/login" element={<AuthPage />} />
-                <Route path="/signup" element={<AuthPage />} />
-                <Route path="/pricing" element={<Pricing />} />
-                
-                <Route element={<PublicPageLayout />}>
-                  <Route path="/features" element={<Features />} />
-                  <Route path="/whats-new" element={<WhatsNew />} />
+                  {/* ── Public routes ─────────────────────────────── */}
+                  <Route path="/" element={<LandingPage />} />
+                  <Route path="/login" element={<AuthPage />} />
+                  <Route path="/signup" element={<AuthPage />} />
+                  <Route path="/pricing" element={<Pricing />} />
+                  <Route path="/checkout-success" element={<CheckoutSuccess />} />
                   <Route path="/blog" element={<Blog />} />
                   <Route path="/guides" element={<Guides />} />
                   <Route path="/templates-gallery" element={<TemplatesGallery />} />
@@ -69,29 +67,31 @@ export default function App() {
                   <Route path="/privacy" element={<Privacy />} />
                   <Route path="/terms" element={<Terms />} />
                   <Route path="/legal" element={<Legal />} />
-                </Route>
 
-                <Route
-                  path="/dashboard"
-                  element={
-                    <ProtectedRoute>
-                      <DashboardLayout />
-                    </ProtectedRoute>
-                  }
-                >
-                  <Route index element={<Dashboard />} />
-                  <Route path="library" element={<Library />} />
-                  <Route path="create" element={<CreationOptions />} />
-                  <Route path="create/ai" element={<AIPrompt />} />
-                  <Route path="create/upload" element={<DocumentUpload />} />
-                  <Route path="create/manual" element={<ManualForm />} />
-                  <Route path="editor/:id?" element={<SheetEditor />} />
-                  <Route path="preview/:id" element={<Preview />} />
-                  <Route path="learn-ai" element={<LearnAI />} />
-                  <Route path="settings" element={<Settings />} />
-                  <Route path="profile" element={<Profile />} />
-                </Route>
-                <Route path="*" element={<Navigate to="/" replace />} />
+                  {/* ── Protected dashboard routes ────────────────── */}
+                  <Route
+                    path="/dashboard"
+                    element={
+                      <ProtectedRoute>
+                        <DashboardLayout />
+                      </ProtectedRoute>
+                    }
+                  >
+                    <Route index element={<Dashboard />} />
+                    <Route path="library" element={<Library />} />
+                    <Route path="create" element={<CreationOptions />} />
+                    <Route path="create/ai" element={<AIPrompt />} />
+                    <Route path="create/upload" element={<DocumentUpload />} />
+                    <Route path="create/manual" element={<ManualForm />} />
+                    <Route path="editor/:id?" element={<SheetEditor />} />
+                    <Route path="preview/:id" element={<Preview />} />
+                    <Route path="learn-ai" element={<LearnAI />} />
+                    <Route path="settings" element={<Settings />} />
+                    <Route path="profile" element={<Profile />} />
+                  </Route>
+
+                  {/* ── Fallback ───────────────────────────────────── */}
+                  <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
               </Suspense>
             </Router>

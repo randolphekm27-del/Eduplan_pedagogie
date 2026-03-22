@@ -25,6 +25,43 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [session, setSession] = useState<Session | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const buildProfileFallback = (authUser: SupabaseUser) => {
+        const metadata = authUser.user_metadata ?? {};
+        const firstName = metadata.firstName ?? metadata.firstname ?? "Utilisateur";
+        const lastName = metadata.lastName ?? metadata.lastname ?? "";
+        const role = metadata.role === "student" || metadata.role === "admin" ? metadata.role : "teacher";
+        const subject = metadata.subject;
+
+        return {
+            id: authUser.id,
+            email: authUser.email ?? "",
+            firstname: firstName,
+            lastname: lastName,
+            role,
+            specialties: typeof subject === "string" && subject.trim() ? [subject] : [],
+        };
+    };
+
+    const ensureUserProfile = async (authUser: SupabaseUser) => {
+        const fallbackProfile = buildProfileFallback(authUser);
+        console.warn("🟠 AuthProvider: Creating missing profile from auth metadata for", authUser.email);
+
+        const { data: upsertedProfile, error: upsertError } = await supabase
+            .from("user_profiles")
+            .upsert(fallbackProfile, { onConflict: "id" })
+            .select()
+            .single();
+
+        if (upsertError) {
+            console.error("❌ AuthProvider: Failed to auto-create missing profile:", upsertError);
+            return null;
+        }
+
+        console.log("✅ AuthProvider: Missing profile recreated successfully");
+        setProfile(upsertedProfile as UserProfile);
+        return upsertedProfile as UserProfile;
+    };
+
     const loadUserProfile = async (userId: string, retryCount = 0) => {
         try {
             console.log(`🟡 [Try ${retryCount + 1}/5] Loading profile for user:`, userId);
@@ -37,6 +74,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
             // Si profil non trouvé (PGRST116), peut être en train d'être créé (trigger)
             if (profileError?.code === 'PGRST116') {
+                const {
+                    data: { user: authUser },
+                } = await supabase.auth.getUser();
+
+                if (authUser?.id === userId) {
+                    const recoveredProfile = await ensureUserProfile(authUser);
+                    if (recoveredProfile) {
+                        return recoveredProfile;
+                    }
+                }
+
                 console.warn(`⏳ Profile not found yet (attempt ${retryCount + 1}/5). Retrying in 1.5s...`, userId);
 
                 if (retryCount < 4) {

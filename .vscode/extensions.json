@@ -1,0 +1,10 @@
+{
+    "recommendations": [
+        "denoland.vscode-deno",
+        "esbenp.prettier-vscode",
+        "bradlc.vscode-tailwindcss",
+        "msjsdiag.debugger-for-chrome",
+        "firsttris.vscode-jest-runner",
+        "Natizyskunk.sql-formatter"
+    ]
+}

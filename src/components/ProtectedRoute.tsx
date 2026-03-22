@@ -11,10 +11,11 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     children,
     requiredRole
 }) => {
-    const { user, profile, loading } = useAuth();
-    // FIX Bug #3: Escape hatch — if profile never loads after 30s, redirect to login
-    // instead of spinning forever (prevents infinite loop on network errors or RLS failure).
+    const { user, profile, loading, refreshProfile, logout } = useAuth();
+    // If the profile never loads, stay on a recovery screen instead of bouncing
+    // the user between /login and /dashboard.
     const [profileTimedOut, setProfileTimedOut] = useState(false);
+    const [isRecovering, setIsRecovering] = useState(false);
     const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     useEffect(() => {
@@ -50,10 +51,45 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
         return <Navigate to="/login" replace />;
     }
 
-    // FIX Bug #3: Redirect to login if profile load timed out after 30s
     if (profileTimedOut) {
-        console.warn("ProtectedRoute: Profile never loaded, redirecting to /login");
-        return <Navigate to="/login" replace />;
+        return (
+            <div className="flex items-center justify-center h-screen bg-edu-bg">
+                <div className="text-center max-w-md p-8 bg-white border border-edu-light shadow-xl rounded-[2px]">
+                    <div className="w-16 h-16 border-4 border-edu-red/20 border-t-edu-red rounded-full animate-spin mx-auto mb-6"></div>
+                    <h1 className="text-2xl font-serif font-bold text-edu-black mb-4">Compte connecte, profil indisponible</h1>
+                    <p className="text-edu-dark mb-6">
+                        La session est bien ouverte, mais votre profil applicatif n'a pas encore pu etre charge.
+                        Nous evitons maintenant toute redirection automatique pour ne plus vous bloquer dans une boucle.
+                    </p>
+                    <div className="flex flex-col gap-3">
+                        <button
+                            onClick={async () => {
+                                setIsRecovering(true);
+                                setProfileTimedOut(false);
+                                try {
+                                    await refreshProfile();
+                                } finally {
+                                    setIsRecovering(false);
+                                }
+                            }}
+                            disabled={isRecovering}
+                            className="px-6 py-2.5 bg-edu-red text-white font-bold rounded-[2px] hover:bg-[#5a0808] transition-all w-full disabled:opacity-70"
+                        >
+                            {isRecovering ? "Nouvelle tentative..." : "Reessayer le chargement du profil"}
+                        </button>
+                        <button
+                            onClick={async () => {
+                                await logout();
+                            }}
+                            className="px-6 py-2.5 bg-white text-edu-black font-bold rounded-[2px] border border-edu-light hover:bg-edu-bg transition-all w-full"
+                        >
+                            Se deconnecter
+                        </button>
+                    </div>
+                    <p className="mt-4 text-xs text-edu-dark/50">Si le probleme persiste, verifiez la table user_profiles et les policies Supabase.</p>
+                </div>
+            </div>
+        );
     }
 
     // Si on a un user mais que le profil n'est pas encore là

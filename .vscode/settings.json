@@ -1,0 +1,36 @@
+{
+    "// EduPlan Development Settings": "Configuration for VS Code with Deno support",
+    "// TypeScript Configuration": "Use workspace TypeScript for better intellisense",
+    "typescript.tsdk": "node_modules/typescript/lib",
+    "typescript.enablePromptUseWorkspaceTsdk": true,
+    "// Deno Configuration": "Enable Deno for supabase/functions directory",
+    "deno.enable": true,
+    "deno.import_ast": true,
+    "[typescript]": {
+        "defaultFormatter": "denoland.vscode-deno",
+        "editor.defaultFormatter": "denoland.vscode-deno"
+    },
+    "[javascript]": {
+        "defaultFormatter": "denoland.vscode-deno"
+    },
+    "// VS Code Extensions": "Recommended configuration",
+    "extensions.ignoreRecommendations": false,
+    "// File Associations": "Detect file types correctly",
+    "files.associations": {
+        "*.ts": "typescript",
+        "*.tsx": "typescriptreact"
+    },
+    "// Search Configuration": "Exclude unnecessary directories",
+    "search.exclude": {
+        "**/node_modules": true,
+        "**/dist": true,
+        "**/.next": true,
+        "**/supabase/.branches": true
+    },
+    "// Files Configuration": "Hide generated files",
+    "files.exclude": {
+        "**/.git": true,
+        "**/.turbo": true,
+        "**/node_modules": true
+    }
+}

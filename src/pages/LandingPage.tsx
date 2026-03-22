@@ -13,10 +13,10 @@ import { useAuth } from '../context/AuthContext';
 import { Navigate } from 'react-router-dom';
 
 export default function LandingPage() {
-  const { user, loading } = useAuth();
+  const { user, profile, loading } = useAuth();
 
-  // Redirect to dashboard if already authenticated
-  if (!loading && user) {
+  // Redirect to dashboard only when auth and app profile are both ready.
+  if (!loading && user && profile) {
     return <Navigate to="/dashboard" replace />;
   }
 
