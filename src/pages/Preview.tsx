@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import html2pdf from 'html2pdf.js';
 import { saveAs } from 'file-saver';
 import { storageService } from '../services/storageService';
+import { useAuth } from '../context/AuthContext';
 import { FicheData, generateDocumentHTML, DOCUMENT_STYLES } from '../utils/documentTemplate';
 
 export default function Preview() {
@@ -15,6 +16,9 @@ export default function Preview() {
   const [isLoading, setIsLoading] = useState(!location.state?.draft);
   const [isExporting, setIsExporting] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
+  const { profile } = useAuth();
+  
+  const isFree = profile?.tier === 'free';
 
   useEffect(() => {
     if (location.state?.draft) {
@@ -47,7 +51,7 @@ export default function Preview() {
     const loadingToast = toast.loading('Export PDF en cours...');
     
     try {
-      const fullHTML = generateDocumentHTML(ficheData);
+      const fullHTML = generateDocumentHTML(ficheData, isFree);
       const opt = {
         margin: 0,
         filename: `fiche-${ficheData.titre.substring(0, 30).replace(/[^a-z0-9]/gi, '_')}.pdf`,
@@ -78,7 +82,7 @@ export default function Preview() {
 
   const exportToWord = () => {
     if (!ficheData) return;
-    const fullHTML = generateDocumentHTML(ficheData);
+    const fullHTML = generateDocumentHTML(ficheData, isFree);
     const htmlContent = `
       <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
       <head>
@@ -99,7 +103,7 @@ export default function Preview() {
   if (isLoading || !ficheData) return null;
 
   // Générer et parser les pages
-  const fullHTML = ficheData ? generateDocumentHTML(ficheData) : '';
+  const fullHTML = ficheData ? generateDocumentHTML(ficheData, isFree) : '';
   const pageElements = React.useMemo(() => {
     if (!fullHTML) return [];
     const parser = new DOMParser();

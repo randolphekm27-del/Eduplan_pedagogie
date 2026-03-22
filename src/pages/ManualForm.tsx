@@ -5,9 +5,11 @@ import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'sonner';
 import { storageService } from '../services/storageService';
 import { FicheData } from '../utils/documentTemplate';
+import { useAuth } from '../context/AuthContext';
 
 export default function ManualForm() {
   const navigate = useNavigate();
+  const { profile, refreshProfile } = useAuth();
   const [openSection, setOpenSection] = useState<string | null>('header');
   const [templateType, setTemplateType] = useState('classic');
   const [formData, setFormData] = useState({
@@ -30,6 +32,18 @@ export default function ManualForm() {
   const handleSubmit = async () => {
     if (!formData.theme || !formData.subject) {
       toast.error('Veuillez remplir au moins le thème et la matière.');
+      return;
+    }
+
+    // Restriction Plan Gratuit
+    if (profile?.tier === 'free' && profile.lessons_count >= 3) {
+      toast.error("Limite atteinte", {
+        description: "Vous avez atteint la limite de 3 fiches pour le plan Gratuit (Populaire). Passez au plan Pro pour continuer !",
+        action: {
+          label: "Voir les tarifs",
+          onClick: () => navigate('/pricing')
+        }
+      });
       return;
     }
 
@@ -75,6 +89,7 @@ export default function ManualForm() {
 
       const savedId = await storageService.saveFiche(newFiche);
       toast.success('Fiche créée avec succès !');
+      await refreshProfile(); // Refresh usage stats
       navigate(`/dashboard/editor/${savedId}`);
     } catch (error) {
        console.error(error);

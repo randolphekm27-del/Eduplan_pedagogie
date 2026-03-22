@@ -14,6 +14,7 @@ interface AuthContextType {
     logout: () => Promise<void>;
     updateProfile: (data: Partial<UserProfile>) => Promise<void>;
     resetPassword: (email: string) => Promise<void>;
+    refreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -54,9 +55,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 return null;
             }
 
-            console.log("Profile loaded successfully:", profileData);
-            setProfile(profileData as UserProfile);
-            return profileData as UserProfile;
+            // Fetch subscription and usage in parallel
+            const [subscriptionResult, usageResult] = await Promise.all([
+                supabase
+                    .from("subscriptions")
+                    .select("tier, status")
+                    .eq("user_id", userId)
+                    .single(),
+                supabase
+                    .from("usage_stats")
+                    .select("lessons_count, ai_calls_count")
+                    .eq("user_id", userId)
+                    .single()
+            ]);
+
+            const fullProfile = {
+                ...profileData,
+                tier: subscriptionResult.data?.tier || 'free',
+                subscription_status: subscriptionResult.data?.status || 'active',
+                lessons_count: usageResult.data?.lessons_count || 0,
+                ai_calls_count: usageResult.data?.ai_calls_count || 0,
+            };
+
+            console.log("Profile loaded successfully with subscription:", fullProfile);
+            setProfile(fullProfile as UserProfile);
+            return fullProfile as UserProfile;
         } catch (err) {
             console.error("Critical error loading profile:", err);
             setProfile(null);
@@ -261,6 +284,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
     };
 
+    const refreshProfile = async () => {
+        if (user) {
+            await loadUserProfile(user.id);
+        }
+    };
+
     const value: AuthContextType = {
         user,
         profile,
@@ -272,6 +301,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         logout,
         updateProfile,
         resetPassword,
+        refreshProfile,
     };
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

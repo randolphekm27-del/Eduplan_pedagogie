@@ -5,12 +5,14 @@ import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'sonner';
 import { storageService } from '../services/storageService';
 import { deepseekAIService } from '../services/deepseekAIService';
+import { useAuth } from '../context/AuthContext';
 
 export default function DocumentUpload() {
   const [isDragging, setIsDragging] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [detectedInfo, setDetectedInfo] = useState<any | null>(null);
   const [pastedText, setPastedText] = useState('');
+  const { profile } = useAuth();
   const navigate = useNavigate();
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -38,6 +40,18 @@ export default function DocumentUpload() {
   };
 
   const handleFile = async (file: File) => {
+    // Restriction Plan Gratuit
+    if (profile?.tier === 'free') {
+      toast.error("Fonctionnalité Premium", {
+        description: "L'import de documents est réservé aux abonnés Pro. Gagnez du temps en passant au niveau supérieur !",
+        action: {
+          label: "Devenir Pro",
+          onClick: () => navigate('/pricing')
+        }
+      });
+      return;
+    }
+
     setIsAnalyzing(true);
     setDetectedInfo(null);
     
@@ -65,6 +79,19 @@ export default function DocumentUpload() {
 
   const handleTextAnalysis = async () => {
     if (!pastedText.trim()) return;
+
+    // Restriction Plan Gratuit
+    if (profile?.tier === 'free') {
+      toast.error("Fonctionnalité Premium", {
+        description: "L'analyse de texte par IA est réservée aux abonnés Pro.",
+        action: {
+          label: "Devenir Pro",
+          onClick: () => navigate('/pricing')
+        }
+      });
+      return;
+    }
+
     setIsAnalyzing(true);
     try {
       const result = await deepseekAIService.generateCompletePedagogicalContent(`Analyse ce texte et crée une fiche : ${pastedText}`);

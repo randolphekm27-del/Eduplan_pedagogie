@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Plus, Clock, Tag, MoreVertical, FileText } from 'lucide-react';
+import { Search, Plus, Clock, Tag, MoreVertical, FileText, Sparkles, TrendingUp, Zap, ChevronRight } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { toast } from 'sonner';
 import { storageService, Fiche } from '../services/storageService';
+import { useAuth } from '../context/AuthContext';
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -11,6 +12,7 @@ export default function Dashboard() {
   const [fiches, setFiches] = useState<Fiche[]>([]);
   const [recentWorks, setRecentWorks] = useState<Fiche[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { profile } = useAuth();
 
   // Charger les fiches depuis le storage
   useEffect(() => {
@@ -85,6 +87,42 @@ export default function Dashboard() {
           </Link>
         </div>
       </div>
+      
+      {/* Premium Banner (Incentive for Free Tier) */}
+      {profile?.tier === 'free' && (
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="mb-12 relative overflow-hidden bg-edu-dark rounded-2xl p-6 md:p-8 text-white shadow-xl group border border-edu-red/20"
+        >
+          {/* Decorative backgrounds */}
+          <div className="absolute top-0 right-0 w-64 h-64 bg-edu-red/10 blur-[80px] -mr-32 -mt-32"></div>
+          <div className="absolute bottom-0 left-0 w-48 h-48 bg-edu-red/10 blur-[60px] -ml-24 -mb-24"></div>
+          
+          <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="text-center md:text-left">
+              <div className="inline-flex items-center gap-2 bg-edu-red px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest mb-4">
+                <Sparkles size={12} fill="white" />
+                Offre Limitée
+              </div>
+              <h3 className="font-serif text-2xl md:text-3xl mb-2">Libérez votre potentiel avec <span className="text-edu-red italic">EduPlan Pro</span></h3>
+              <p className="text-edu-bg/70 text-sm md:text-base max-w-xl">
+                Vous utilisez actuellement le plan Gratuit ({profile.lessons_count}/3 fiches). 
+                Passez au plan Pro pour bénéficier des générations IA illimitées et de l'export HD sans filigrane.
+              </p>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
+              <Link 
+                to="/pricing" 
+                className="bg-edu-red hover:bg-edu-red/90 text-white px-8 py-3 rounded-full font-bold transition-all shadow-lg shadow-edu-red/20 flex items-center justify-center gap-2 group/btn"
+              >
+                Découvrir le plan Pro
+                <ChevronRight size={18} className="group-hover/btn:translate-x-1 transition-transform" />
+              </Link>
+            </div>
+          </div>
+        </motion.div>
+      )}
 
       {/* Reprendre mes travaux */}
       <section className="mb-12">

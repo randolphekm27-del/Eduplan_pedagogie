@@ -1,5 +1,5 @@
 import React from 'react';
-import { BookOpen, Settings, FileText, Sparkles, PlusSquare, GraduationCap, FolderKanban, X, Library as LibraryIcon, LogOut } from 'lucide-react';
+import { BookOpen, Settings, FileText, Sparkles, PlusSquare, GraduationCap, FolderKanban, X, Library as LibraryIcon, LogOut, Zap, Crown, Info } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -111,6 +111,39 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             <Settings size={18} strokeWidth={1.5} />
             <span className="font-sans text-sm font-medium">Paramètres</span>
           </Link>
+
+          {/* Subscription Info */}
+          <div className="px-4 py-3 bg-edu-black/20 rounded-xl mb-2 mt-4">
+             <div className="flex items-center justify-between mb-2">
+                <span className="text-[10px] font-mono text-edu-bg/60 uppercase tracking-widest flex items-center gap-1">
+                   {profile?.tier === 'pro' ? <Crown size={10} className="text-amber-400" /> : <Zap size={10} className="text-edu-red" />}
+                   Plan {profile?.tier === 'pro' ? 'Pro' : (profile?.tier === 'institution' ? 'Établissement' : 'Gratuit')}
+                </span>
+                {profile?.tier === 'free' && (
+                  <Link to="/pricing" onClick={onClose} className="text-[10px] text-edu-red font-bold hover:underline">UPGRADE</Link>
+                )}
+             </div>
+             
+             {profile?.tier === 'free' && (
+               <>
+                 <div className="w-full bg-edu-bg/10 h-1.5 rounded-full overflow-hidden mb-1.5">
+                    <div 
+                      className={`h-full rounded-full transition-all duration-500 ${profile.lessons_count >= 3 ? 'bg-edu-red shadow-[0_0_8px_rgba(126,11,11,0.5)]' : 'bg-edu-bg/80'}`} 
+                      style={{ width: `${Math.min((profile.lessons_count / 3) * 100, 100)}%` }}
+                    ></div>
+                 </div>
+                 <div className="flex justify-between text-[10px] font-mono opacity-60">
+                    <span>{profile?.lessons_count || 0}/3 fiches</span>
+                 </div>
+               </>
+             )}
+             
+             {profile?.tier === 'pro' && (
+                <div className="text-[10px] font-mono text-edu-bg/60">
+                   Fiches illimitées ✓
+                </div>
+             )}
+          </div>
           <div className="mt-4 px-4 flex items-center justify-between">
             <Link to="/dashboard/profile" onClick={onClose} className="flex items-center gap-3">
               <div className="w-10 h-10 lg:w-8 lg:h-8 rounded-full bg-edu-black/40 border border-edu-light/30 flex items-center justify-center font-serif text-sm">

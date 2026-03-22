@@ -207,12 +207,29 @@ export const DOCUMENT_STYLES = `
     margin: 10px auto;
   }
 
+  .watermark {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(-45deg);
+    font-size: 80pt;
+    color: rgba(0, 0, 0, 0.05);
+    z-index: 1000;
+    pointer-events: none;
+    white-space: nowrap;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 12px;
+  }
+
   strong {
     font-weight: bold;
   }
 `;
 
-export function generateDocumentHTML(data: FicheData): string {
+export function generateDocumentHTML(data: FicheData, showWatermark: boolean = false): string {
+  const watermarkHTML = showWatermark ? '<div class="watermark">EDUPLAN GRATUIT</div>' : '';
+  
   const sequencesRows = data.sequences.map(seq => `
     <tr>
       <td class="center" style="width:5%">${seq.numero}</td>
@@ -229,6 +246,7 @@ export function generateDocumentHTML(data: FicheData): string {
   // Generate extra pages HTML
   const extraPagesHTML = (data.extraPages || []).map(page => `
     <div class="page page-portrait">
+        ${watermarkHTML}
         <h2>${page.title.toUpperCase()}</h2>
         <div class="section">
             <div class="content-area prose">${page.content}</div>
@@ -252,6 +270,7 @@ export function generateDocumentHTML(data: FicheData): string {
     <!-- PAGE 1: FICHE PEDAGOGIQUE (LANDSCAPE) -->
     ${hasPedagogicalContent ? `
     <div class="page page-landscape">
+        ${watermarkHTML}
         <h2>FICHE PÉDAGOGIQUE N° ${data.numeroFiche || ''}</h2>
         <table class="header-table">
             <tr>
@@ -313,6 +332,7 @@ export function generateDocumentHTML(data: FicheData): string {
     <!-- PAGE 2: DOCUMENT ELEVE -->
     ${hasStudentContent ? `
     <div class="page page-portrait">
+        ${watermarkHTML}
         <h2>DOCUMENT ÉLÈVE</h2>
         <div class="section">
             <p><strong>ACTIVITÉ :</strong> ${data.documentEleve.activite}</p>
@@ -346,6 +366,7 @@ export function generateDocumentHTML(data: FicheData): string {
     <!-- PAGE 3: FICHE DE SYNTHESE -->
     ${hasSynthesisContent ? `
     <div class="page page-portrait">
+        ${watermarkHTML}
         <h2>FICHE DE SYNTHÈSE</h2>
         ${data.ficheSynthese.point1 ? `
         <div class="section">
@@ -365,6 +386,7 @@ export function generateDocumentHTML(data: FicheData): string {
     <!-- PAGE 4: EVALUATION FORMATIVE -->
     ${data.evaluationFormative ? `
     <div class="page page-portrait">
+        ${watermarkHTML}
         <h2>ÉVALUATION FORMATIVE</h2>
         <div class="section">
             <div class="content-area prose">${data.evaluationFormative}</div>
