@@ -25,76 +25,64 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [session, setSession] = useState<Session | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const loadUserProfile = async (userId: string) => {
+    const loadUserProfile = async (userId: string, retryCount = 0) => {
         try {
-            console.log("🟡 Loading profile for user:", userId);
+            console.log(`🟡 [Attempt ${retryCount + 1}] Loading profile for user:`, userId);
 
-            const profileQuery = supabase
+            // Removing the 15s race timeout to let the request finish naturally or fail by network
+            const { data: profileData, error: profileError } = await supabase
                 .from("user_profiles")
                 .select("*")
                 .eq("id", userId)
                 .single();
 
-            // Increase timeout to 15s for stability
-            const timeout = new Promise((_, reject) =>
-                setTimeout(() => reject(new Error('Profile load timeout after 15s')), 15000)
-            );
-
-            const result = await Promise.race([profileQuery, timeout]) as any;
-            const profileData = result?.data;
-            const profileError = result?.error;
+            // If profile not found (PGRST116), it might be still creating
+            if (profileError?.code === 'PGRST116' && retryCount < 5) {
+                console.warn(`⏳ Account still initializing for ${userId}. Retrying (${retryCount + 1}/5)...`);
+                await new Promise(resolve => setTimeout(resolve, 1500));
+                return loadUserProfile(userId, retryCount + 1);
+            }
 
             if (profileError) {
                 console.error("❌ Profile fetch error:", profileError);
-                // Return descriptive error object to help debugging
                 setProfile(null);
                 return null;
             }
 
             if (!profileData) {
-                console.warn("⚠️ Profile not found in database for ID:", userId);
+                console.warn("⚠️ Profile truly missing for ID:", userId);
                 setProfile(null);
                 return null;
             }
 
-            // Fetch subscription and usage in parallel
-            try {
-                const [subscriptionResult, usageResult] = await Promise.all([
-                    supabase
-                        .from("subscriptions")
-                        .select("tier, status")
-                        .eq("user_id", userId)
-                        .limit(1)
-                        .maybeSingle(),
-                    supabase
-                        .from("usage_stats")
-                        .select("lessons_count, ai_calls_count")
-                        .eq("user_id", userId)
-                        .limit(1)
-                        .maybeSingle()
-                ]);
+            // Fetch sub-data
+            const [subscriptionResult, usageResult] = await Promise.all([
+                supabase
+                    .from("subscriptions")
+                    .select("tier, status")
+                    .eq("user_id", userId)
+                    .maybeSingle(),
+                supabase
+                    .from("usage_stats")
+                    .select("lessons_count, ai_calls_count")
+                    .eq("user_id", userId)
+                    .maybeSingle()
+            ]);
 
-                if (subscriptionResult.error) console.warn("Subscription fetch error (swallowed):", subscriptionResult.error);
-                if (usageResult.error) console.warn("Usage fetch error (swallowed):", usageResult.error);
+            const fullProfile = {
+                ...profileData,
+                tier: subscriptionResult.data?.tier || 'free',
+                subscription_status: subscriptionResult.data?.status || 'active',
+                lessons_count: usageResult.data?.lessons_count || 0,
+                ai_calls_count: usageResult.data?.ai_calls_count || 0,
+            };
 
-                const fullProfile = {
-                    ...profileData,
-                    tier: subscriptionResult.data?.tier || 'free',
-                    subscription_status: subscriptionResult.data?.status || 'active',
-                    lessons_count: usageResult.data?.lessons_count || 0,
-                    ai_calls_count: usageResult.data?.ai_calls_count || 0,
-                };
-
-                console.log("✅ Profile loaded successfully:", fullProfile);
-                setProfile(fullProfile as UserProfile);
-                return fullProfile as UserProfile;
-            } catch (innerErr) {
-                console.warn("Sub-profile data loading failed partially:", innerErr);
-                setProfile(profileData as UserProfile);
-                return profileData as UserProfile;
-            }
-        } catch (err) {
-            console.error("🔥 Critical error in loadUserProfile:", err);
+            console.log("✅ Profile ready:", fullProfile.email);
+            setProfile(fullProfile as UserProfile);
+            return fullProfile as UserProfile;
+        } catch (err: any) {
+            console.error("🔥 Global failure in loadUserProfile:", err);
+            if (retryCount < 2) return loadUserProfile(userId, retryCount + 1);
             setProfile(null);
             return null;
         }

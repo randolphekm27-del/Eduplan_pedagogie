@@ -31,31 +31,22 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
         return <Navigate to="/login" replace />;
     }
 
-    // Si on a un user mais vraiment pas de profil après chargement
+    // Si on a un user mais que le profil n'est pas encore là
+    // On attend un court instant de plus pour laisser le temps à la base de données de se synchroniser
     if (!profile) {
-        console.warn("ProtectedRoute: User logged in but no profile found.");
         return (
             <div className="flex items-center justify-center h-screen bg-edu-bg">
                 <div className="text-center max-w-md p-8 bg-white border border-edu-light shadow-xl rounded-[2px]">
-                    <h1 className="text-2xl font-serif font-bold text-edu-black mb-4">Profil non trouvé</h1>
-                    <p className="text-edu-dark mb-6">Votre session est active, mais nous n'avons pas pu charger votre profil pédagogique.</p>
-                    <div className="flex flex-col gap-3">
-                        <button 
-                            onClick={() => window.location.reload()}
-                            className="px-6 py-2.5 bg-edu-red text-white font-bold rounded-[2px] hover:bg-[#5a0808] transition-all"
-                        >
-                            Réessayer
-                        </button>
-                        <button 
-                            onClick={() => {
-                                // Logout via context to clear storage
-                                window.location.href = '/login';
-                            }}
-                            className="px-6 py-2.5 bg-edu-light/10 text-edu-dark font-bold rounded-[2px] hover:bg-edu-light/20 transition-all border border-edu-light/50"
-                        >
-                            Retour à la connexion
-                        </button>
-                    </div>
+                    <div className="w-16 h-16 border-4 border-edu-red/20 border-t-edu-red rounded-full animate-spin mx-auto mb-6"></div>
+                    <h1 className="text-2xl font-serif font-bold text-edu-black mb-4">Synchronisation de votre compte</h1>
+                    <p className="text-edu-dark mb-6">Nous finalisons la configuration de votre espace pédagogique. Cela ne prend que quelques secondes...</p>
+                    <button 
+                        onClick={() => window.location.reload()}
+                        className="px-6 py-2.5 bg-edu-red text-white font-bold rounded-[2px] hover:bg-[#5a0808] transition-all w-full"
+                    >
+                        Actualiser maintenant
+                    </button>
+                    <p className="mt-4 text-xs text-edu-dark/40">Si cet écran persiste plus de 30 secondes, veuillez nous contacter.</p>
                 </div>
             </div>
         );
