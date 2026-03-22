@@ -29,8 +29,8 @@ export default function LandingPage() {
           
           <div className="flex items-center gap-4">
             <ThemeToggle />
-            <Link to="/signup" className="hidden sm:block">
-              <Button variant="primary" className="text-sm px-6 py-2.5">Essayer gratuitement</Button>
+            <Link to="/login" className="hidden sm:block">
+              <Button variant="primary" className="text-sm px-6 py-2.5">Accéder à la plateforme</Button>
             </Link>
           </div>
         </div>
