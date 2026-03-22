@@ -1,4 +1,4 @@
-import { Bot, Upload, Edit3, ArrowLeft } from 'lucide-react';
+import { Bot, Upload, Edit3, ArrowLeft, Plus } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 
@@ -91,6 +91,32 @@ export default function CreationOptions() {
           </ul>
           <button className="w-full py-2.5 border border-edu-dark text-edu-black rounded-[2px] group-hover:bg-edu-red group-hover:text-white group-hover:border-edu-red transition-colors font-medium">
             Choisir
+          </button>
+        </motion.div>
+
+        {/* Option 4: Blank Page */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          onClick={() => navigate('/dashboard/editor/blank')}
+          className="bg-[#F5F2ED] border border-edu-light p-8 rounded-[2px] transition-all duration-300 hover:border-edu-red hover:shadow-[0_10px_30px_rgba(126,11,11,0.1)] hover:scale-[1.02] cursor-pointer group flex flex-col h-full"
+        >
+          <div className="mb-6">
+            <div className="w-16 h-16 border-2 border-edu-red border-dashed rounded-[4px] flex items-center justify-center">
+              <Plus size={32} className="text-edu-red" />
+            </div>
+          </div>
+          <h3 className="font-serif text-xl font-bold mb-3 text-edu-black uppercase tracking-wide">Partir de zéro</h3>
+          <p className="text-edu-dark text-sm leading-relaxed mb-6 flex-1">
+            Une page blanche pour construire votre propre modèle de fiche, bloc par bloc.
+          </p>
+          <ul className="space-y-2 mb-8 text-sm text-edu-black font-medium">
+            <li className="flex items-center gap-2">✓ Page blanche</li>
+            <li className="flex items-center gap-2">✓ Flexibilité absolue</li>
+          </ul>
+          <button className="w-full py-2.5 border border-edu-dark text-edu-black rounded-[2px] group-hover:bg-edu-red group-hover:text-white group-hover:border-edu-red transition-colors font-medium">
+            Créer
           </button>
         </motion.div>
       </div>

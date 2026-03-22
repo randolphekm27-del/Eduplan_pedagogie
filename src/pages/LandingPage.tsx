@@ -9,7 +9,17 @@ import { Footer } from '../components/Footer';
 
 import { ThemeToggle } from '../components/ThemeToggle';
 
+import { useAuth } from '../context/AuthContext';
+import { Navigate } from 'react-router-dom';
+
 export default function LandingPage() {
+  const { user, loading } = useAuth();
+
+  // Redirect to dashboard if already authenticated
+  if (!loading && user) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
   return (
     <div className="min-h-screen bg-edu-bg font-sans text-edu-black selection:bg-edu-red selection:text-edu-bg transition-colors duration-500">
       {/* Header */}

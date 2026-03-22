@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Link, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { Settings, Mail, Lock, User, ChevronRight, Loader2, BookOpen } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'sonner';
@@ -8,22 +8,29 @@ import { useAuth } from '../context/AuthContext';
 export default function AuthPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login, signup } = useAuth();
-  
+  const { user, profile, loading, login, signup } = useAuth();
+
+  // Redirect to dashboard if already logged in and profile is ready
+  useEffect(() => {
+    if (!loading && user && profile && location.pathname !== '/signup') {
+       navigate('/dashboard', { replace: true });
+    }
+  }, [user, profile, loading, navigate, location.pathname]);
+
   // Default to login mode if not on /signup path explicitly
   const [isLogin, setIsLogin] = useState(location.pathname !== '/signup');
   const [isLoading, setIsLoading] = useState(false);
-  
+
   // Login Form State
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  
+
   // Signup Form Additional State
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [subject, setSubject] = useState('');
-  
+
   // Sync state if url changes
   useEffect(() => {
     setIsLogin(location.pathname !== '/signup');
@@ -33,43 +40,43 @@ export default function AuthPage() {
     e.preventDefault();
 
     if (!email.trim() || !password.trim()) {
-        toast.error('Erreur', { description: 'Veuillez remplir les champs obligatoires.' });
-        return;
+      toast.error('Erreur', { description: 'Veuillez remplir les champs obligatoires.' });
+      return;
     }
 
     setIsLoading(true);
-    
+
     try {
       if (isLogin) {
-          await login(email, password);
-          toast.success('Connecté avec succès!', { description: `Ravi de vous revoir.` });
-          setTimeout(() => {
-              navigate('/dashboard', { replace: true });
-          }, 100);
+        await login(email, password);
+        toast.success('Connecté avec succès!', { description: `Ravi de vous revoir.` });
+        setTimeout(() => {
+          navigate('/dashboard', { replace: true });
+        }, 100);
       } else {
-          if (!firstName.trim() || !lastName.trim() || !subject.trim()) {
-              toast.error('Erreur', { description: 'Veuillez remplir votre nom et matière.' });
-              setIsLoading(false);
-              return;
-          }
-          if (password !== confirmPassword) {
-              toast.error('Erreur', { description: 'Les mots de passe ne correspondent pas.' });
-              setIsLoading(false);
-              return;
-          }
-          await signup(email, password, firstName, lastName, 'teacher', subject);
-          toast.success('Compte créé avec succès!', { description: 'Bienvenue sur EduPlan.' });
-          
-          setIsLogin(true); // Switch to login to force them to sign in, or auto redirect
-          navigate('/login');
+        if (!firstName.trim() || !lastName.trim() || !subject.trim()) {
+          toast.error('Erreur', { description: 'Veuillez remplir votre nom et matière.' });
+          setIsLoading(false);
+          return;
+        }
+        if (password !== confirmPassword) {
+          toast.error('Erreur', { description: 'Les mots de passe ne correspondent pas.' });
+          setIsLoading(false);
+          return;
+        }
+        await signup(email, password, firstName, lastName, 'teacher', subject);
+        toast.success('Compte créé avec succès!', { description: 'Bienvenue sur EduPlan.' });
+
+        setIsLogin(true); // Switch to login to force them to sign in, or auto redirect
+        navigate('/login');
       }
     } catch (error) {
-        console.error('Auth error:', error);
-        toast.error(isLogin ? "Erreur de connexion" : "Erreur d'inscription", {
-            description: error instanceof Error ? error.message : 'Identifiants incorrects.'
-        });
+      console.error('Auth error:', error);
+      toast.error(isLogin ? "Erreur de connexion" : "Erreur d'inscription", {
+        description: error instanceof Error ? error.message : 'Identifiants incorrects.'
+      });
     } finally {
-        setIsLoading(false);
+      setIsLoading(false);
     }
   };
 
@@ -85,7 +92,7 @@ export default function AuthPage() {
   return (
     <div className="min-h-screen flex bg-edu-bg font-sans text-edu-black selection:bg-edu-red selection:text-edu-bg">
       {/* Left Column - Form (50% to 60%) */}
-      <div className="w-full lg:w-[50%] xl:w-[45%] flex flex-col justify-center px-8 sm:px-16 md:px-24 relative z-10 bg-white shadow-[20px_0_40px_rgba(0,0,0,0.05)]">
+      <div className="w-full lg:w-[50%] xl:w-[45%] flex flex-col justify-center px-6 sm:px-16 md:px-24 py-24 sm:py-32 lg:py-12 relative z-10 bg-white shadow-[20px_0_40px_rgba(0,0,0,0.05)] overflow-y-auto min-h-screen">
         <div className="absolute top-8 left-8 sm:left-16 md:left-24">
           <Link to="/" className="flex items-center gap-2 group">
             <div className="w-10 h-10 rounded-full bg-edu-red flex items-center justify-center text-white group-hover:scale-110 transition-transform"><Settings size={20} /></div>
@@ -93,74 +100,75 @@ export default function AuthPage() {
           </Link>
         </div>
 
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5 }}
           className="max-w-sm w-full mx-auto"
         >
           <div className="mb-10 text-center lg:text-left">
-              <h1 className="font-serif text-4xl mb-3 text-edu-black">{isLogin ? 'Bon retour' : 'Rejoindre EduPlan'}</h1>
-              <p className="text-edu-dark font-medium">L'assistant pédagogique pour les professeurs de matières techniques.</p>
+            <h1 className="font-serif text-4xl mb-3 text-edu-black">{isLogin ? 'Bon retour' : 'Rejoindre EduPlan'}</h1>
+            <p className="text-edu-dark font-medium">L'assistant pédagogique pour tous les enseignants.</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <AnimatePresence mode="popLayout">
-                {!isLogin && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0, marginBottom: 0 }}
-                    animate={{ opacity: 1, height: 'auto', marginBottom: 16 }}
-                    exit={{ opacity: 0, height: 0, marginBottom: 0 }}
-                    className="grid grid-cols-2 gap-4"
-                  >
-                    <div className="relative group">
-                        <User size={18} className="absolute left-3 top-3 text-edu-light group-focus-within:text-edu-red transition-colors" />
-                        <input type="text" placeholder="Prénom" value={firstName} onChange={e=>setFirstName(e.target.value)} className="w-full pl-10 pr-4 py-3 bg-[#F5F2ED] border border-transparent rounded-[4px] outline-none focus:border-edu-red focus:bg-white focus:ring-1 focus:ring-edu-red transition-all" />
-                    </div>
-                    <div className="relative group">
-                        <User size={18} className="absolute left-3 top-3 text-edu-light group-focus-within:text-edu-red transition-colors" />
-                        <input type="text" placeholder="Nom" value={lastName} onChange={e=>setLastName(e.target.value)} className="w-full pl-10 pr-4 py-3 bg-[#F5F2ED] border border-transparent rounded-[4px] outline-none focus:border-edu-red focus:bg-white focus:ring-1 focus:ring-edu-red transition-all" />
-                    </div>
-                  </motion.div>
-                )}
+              {!isLogin && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0, marginBottom: 0 }}
+                  animate={{ opacity: 1, height: 'auto', marginBottom: 16 }}
+                  exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+                  className="grid grid-cols-2 gap-4"
+                >
+                  <div className="relative group">
+                    <User size={18} className="absolute left-3 top-3 text-edu-light group-focus-within:text-edu-red transition-colors" />
+                    <input type="text" placeholder="Prénom" value={firstName} onChange={e => setFirstName(e.target.value)} className="w-full pl-10 pr-4 py-3 bg-[#F5F2ED] border border-transparent rounded-[4px] outline-none focus:border-edu-red focus:bg-white focus:ring-1 focus:ring-edu-red transition-all" />
+                  </div>
+                  <div className="relative group">
+                    <User size={18} className="absolute left-3 top-3 text-edu-light group-focus-within:text-edu-red transition-colors" />
+                    <input type="text" placeholder="Nom" value={lastName} onChange={e => setLastName(e.target.value)} className="w-full pl-10 pr-4 py-3 bg-[#F5F2ED] border border-transparent rounded-[4px] outline-none focus:border-edu-red focus:bg-white focus:ring-1 focus:ring-edu-red transition-all" />
+                  </div>
+                </motion.div>
+              )}
             </AnimatePresence>
 
             <div className="relative group">
               <Mail size={18} className="absolute left-3 top-3.5 text-edu-light group-focus-within:text-edu-red transition-colors" />
-              <input type="email" placeholder="Adresse email" value={email} onChange={e=>setEmail(e.target.value)} className="w-full pl-10 pr-4 py-3 bg-[#F5F2ED] border border-transparent rounded-[4px] outline-none focus:border-edu-red focus:bg-white focus:ring-1 focus:ring-edu-red transition-all" required />
+              <input type="email" placeholder="Adresse email" value={email} onChange={e => setEmail(e.target.value)} className="w-full pl-10 pr-4 py-3 bg-[#F5F2ED] border border-transparent rounded-[4px] outline-none focus:border-edu-red focus:bg-white focus:ring-1 focus:ring-edu-red transition-all" required />
             </div>
 
             <div className="relative group">
               <Lock size={18} className="absolute left-3 top-3.5 text-edu-light group-focus-within:text-edu-red transition-colors" />
-              <input type="password" placeholder="Mot de passe" value={password} onChange={e=>setPassword(e.target.value)} className="w-full pl-10 pr-4 py-3 bg-[#F5F2ED] border border-transparent rounded-[4px] outline-none focus:border-edu-red focus:bg-white focus:ring-1 focus:ring-edu-red transition-all" required />
+              <input type="password" placeholder="Mot de passe" value={password} onChange={e => setPassword(e.target.value)} className="w-full pl-10 pr-4 py-3 bg-[#F5F2ED] border border-transparent rounded-[4px] outline-none focus:border-edu-red focus:bg-white focus:ring-1 focus:ring-edu-red transition-all" required />
             </div>
 
             <AnimatePresence mode="popLayout">
-                {!isLogin && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                    className="space-y-4"
-                  >
-                    <div className="relative group">
-                      <Lock size={18} className="absolute left-3 top-3 text-edu-light group-focus-within:text-edu-red transition-colors" />
-                      <input type="password" placeholder="Confirmer le mot de passe" value={confirmPassword} onChange={e=>setConfirmPassword(e.target.value)} className="w-full pl-10 pr-4 py-3 bg-[#F5F2ED] border border-transparent rounded-[4px] outline-none focus:border-edu-red focus:bg-white focus:ring-1 focus:ring-edu-red transition-all" />
-                    </div>
-                    
-                    <div className="relative group">
-                      <BookOpen size={18} className="absolute left-3 top-3 text-edu-light group-focus-within:text-edu-red transition-colors z-10" />
-                      <select value={subject} onChange={e=>setSubject(e.target.value)} className="w-full pl-10 pr-4 py-3 bg-[#F5F2ED] border border-transparent rounded-[4px] outline-none focus:border-edu-red focus:bg-white focus:ring-1 focus:ring-edu-red transition-all appearance-none text-edu-black relative z-0">
-                        <option value="" disabled>Matière principale</option>
-                        <option value="mel">Maintenance des Équipements (MEL)</option>
-                        <option value="elec">Génie Électrique</option>
-                        <option value="meca">Mécanique Industrielle</option>
-                        <option value="auto">Automatisme</option>
-                        <option value="other">Autre matière technique</option>
-                      </select>
-                    </div>
-                  </motion.div>
-                )}
+              {!isLogin && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="space-y-4"
+                >
+                  <div className="relative group">
+                    <Lock size={18} className="absolute left-3 top-3 text-edu-light group-focus-within:text-edu-red transition-colors" />
+                    <input type="password" placeholder="Confirmer le mot de passe" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} className="w-full pl-10 pr-4 py-3 bg-[#F5F2ED] border border-transparent rounded-[4px] outline-none focus:border-edu-red focus:bg-white focus:ring-1 focus:ring-edu-red transition-all" />
+                  </div>
+
+                  <div className="relative group">
+                    <BookOpen size={18} className="absolute left-3 top-3 text-edu-light group-focus-within:text-edu-red transition-colors z-10" />
+                    <select value={subject} onChange={e => setSubject(e.target.value)} className="w-full pl-10 pr-4 py-3 bg-[#F5F2ED] border border-transparent rounded-[4px] outline-none focus:border-edu-red focus:bg-white focus:ring-1 focus:ring-edu-red transition-all appearance-none text-edu-black relative z-0">
+                      <option value="" disabled>Matière principale</option>
+                      <option value="math">Mathématiques & Informatique</option>
+                      <option value="sciences">Sciences Physiques / SVT</option>
+                      <option value="lettres">Lettres, Histoire & Géo</option>
+                      <option value="langues">Langues Vivantes</option>
+                      <option value="technique">Enseignement Technique & Pro</option>
+                      <option value="other">Autre enseignement</option>
+                    </select>
+                  </div>
+                </motion.div>
+              )}
             </AnimatePresence>
 
             {isLogin && (
@@ -169,12 +177,12 @@ export default function AuthPage() {
               </div>
             )}
 
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               disabled={isLoading}
               className="w-full bg-edu-red text-white py-3.5 rounded-[4px] font-bold hover:bg-[#5a0808] transition-all shadow-lg active:scale-[0.98] flex items-center justify-center gap-2 mt-4"
             >
-              {isLoading ? <Loader2 size={18} className="animate-spin" /> : (isLogin ? 'Se connecter' : 'Créer mon compte')} 
+              {isLoading ? <Loader2 size={18} className="animate-spin" /> : (isLogin ? 'Se connecter' : 'Créer mon compte')}
               {!isLoading && <ChevronRight size={18} />}
             </button>
           </form>
@@ -208,9 +216,9 @@ export default function AuthPage() {
 
           <p className="mt-8 text-center text-sm font-medium text-edu-dark">
             {isLogin ? "Vous n'avez pas de compte ? " : "Vous avez déjà un compte ? "}
-            <button 
+            <button
               type="button"
-              onClick={toggleMode} 
+              onClick={toggleMode}
               className="text-edu-red font-bold hover:underline"
             >
               {isLogin ? "S'inscrire" : "Se connecter"}
@@ -226,48 +234,68 @@ export default function AuthPage() {
           backgroundImage: `radial-gradient(circle at 2px 2px, white 1px, transparent 0)`,
           backgroundSize: '40px 40px'
         }}></div>
-        
+
         {/* Dynamic Light Effects */}
         <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-edu-red/20 blur-[120px] rounded-full translate-x-1/3 -translate-y-1/3"></div>
         <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-edu-light/10 blur-[100px] rounded-full -translate-x-1/2 translate-y-1/2"></div>
-        
+
         <div className="absolute inset-0 flex items-center justify-center">
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8, ease: "easeOut" }}
             className="relative w-full h-full max-w-2xl max-h-[800px] p-12"
           >
-            {/* Stylized Circuit/Formula Art */}
+            {/* Stylized Education Concept Art */}
             <svg viewBox="0 0 400 400" className="w-full h-full text-white/10 stroke-current drop-shadow-2xl" fill="none" strokeWidth="1.5">
-              <circle cx="200" cy="200" r="150" strokeDasharray="4 8" className="animate-[spin_60s_linear_infinite]" />
-              <circle cx="200" cy="200" r="100" strokeDasharray="8 4" className="animate-[spin_40s_linear_infinite_reverse]" />
-              <path d="M50 200 H150 M250 200 H350 M200 50 V150 M200 250 V350" strokeWidth="2" strokeLinecap="round" />
-              <rect x="150" y="150" width="100" height="100" className="text-edu-red/20 fill-current" rx="8" />
-              <path d="M175 175 L225 225 M225 175 L175 225" strokeWidth="2" strokeLinecap="round" className="text-edu-red/60" />
+              <circle cx="200" cy="200" r="160" strokeDasharray="2 10" className="animate-[spin_40s_linear_infinite]" />
+              <circle cx="200" cy="200" r="120" strokeDasharray="8 6" className="animate-[spin_50s_linear_infinite_reverse]" />
+              
+              {/* Nodes representing connected knowledge */}
+              <path d="M120 200 L180 140 L280 160 L240 260 L140 240 Z" strokeWidth="1" strokeDasharray="4 4" className="text-white/20"/>
+              <circle cx="120" cy="200" r="4" className="fill-white/30" />
+              <circle cx="180" cy="140" r="6" className="fill-white/40" />
+              <circle cx="280" cy="160" r="5" className="fill-edu-red/40" />
+              <circle cx="240" cy="260" r="7" className="fill-white/30" />
+              <circle cx="140" cy="240" r="4" className="fill-edu-red/30" />
+
+              {/* Central stylized book / document icon */}
+              <path d="M150 200 Q200 170 250 200 V270 Q200 240 150 270 Z" className="text-edu-red/20 fill-current" />
+              <path d="M200 170 V270" strokeWidth="2" className="text-edu-red/40" />
+              <path d="M165 210 L190 200 M165 230 L190 220" strokeWidth="2" strokeLinecap="round" className="text-edu-red/30" />
+              <path d="M235 210 L210 200 M235 230 L210 220" strokeWidth="2" strokeLinecap="round" className="text-edu-red/30" />
             </svg>
             
             <motion.div 
-               animate={{ y: [0, -10, 0] }} 
-               transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-               className="absolute top-1/4 left-1/4 font-mono text-3xl font-bold tracking-tighter text-white/50 transform -rotate-12 backdrop-blur-sm bg-white/5 px-6 py-3 rounded-lg border border-white/10 shadow-2xl"
+               animate={{ y: [0, -8, 0] }} 
+               transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut" }}
+               className="absolute top-[20%] left-[5%] sm:left-[10%] font-serif text-xl sm:text-2xl tracking-wide text-white/60 transform -rotate-3 backdrop-blur-md bg-white/5 px-5 py-3 rounded-lg border border-white/10 shadow-2xl whitespace-nowrap"
             >
-              P = U × I × cos(φ)
+              Évaluation par Compétences
             </motion.div>
+            
             <motion.div 
-               animate={{ y: [0, 15, 0] }} 
-               transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-               className="absolute bottom-1/3 right-1/4 font-mono text-2xl font-bold tracking-tighter text-edu-red/60 transform rotate-6 backdrop-blur-sm bg-black/20 px-6 py-3 rounded-lg border border-edu-red/20 shadow-2xl"
+               animate={{ y: [0, 12, 0] }} 
+               transition={{ duration: 5.5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+               className="absolute bottom-[30%] right-[2%] sm:right-[10%] font-serif text-lg sm:text-xl font-bold tracking-tight text-edu-red/70 transform rotate-3 backdrop-blur-md bg-black/20 px-5 py-3 rounded-lg border border-edu-red/20 shadow-2xl whitespace-nowrap"
             >
-              Z = √(R² + (Lω - 1/Cω)²)
+              Séquences Pédagogiques
+            </motion.div>
+            
+            <motion.div 
+               animate={{ y: [0, -5, 0] }} 
+               transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+               className="absolute top-[45%] left-[-5%] font-serif text-base sm:text-lg tracking-wider text-white/40 transform -rotate-12 backdrop-blur-sm bg-white/5 px-4 py-2 rounded border border-white/5 shadow-xl whitespace-nowrap"
+            >
+              Génération d'activités
             </motion.div>
           </motion.div>
         </div>
-        
+
         {/* Content Overlay */}
         <div className="absolute bottom-0 left-0 right-0 p-16 bg-gradient-to-t from-edu-black via-edu-black/80 to-transparent">
-            <h2 className="font-serif text-3xl text-white mb-4">La préparation de cours, <span className="text-edu-red italic">réinventée.</span></h2>
-            <p className="text-white/60 text-lg max-w-xl leading-relaxed">Générez des séquences complètes, évaluez par compétences et gagnez des heures précieuses chaque semaine grâce à l'intelligence artificielle spécialisée.</p>
+          <h2 className="font-serif text-3xl text-white mb-4">La préparation de cours, <span className="text-edu-red italic">réinventée.</span></h2>
+          <p className="text-white/60 text-lg max-w-xl leading-relaxed">Générez des séquences complètes, évaluez par compétences et gagnez des heures précieuses chaque semaine grâce à l'intelligence artificielle spécialisée.</p>
         </div>
       </div>
     </div>

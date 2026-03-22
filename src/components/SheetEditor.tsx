@@ -38,6 +38,7 @@ export default function SheetEditor() {
 
   // Structure des sections
   const [sections, setSections] = useState<Section[]>([]);
+  const [isStandardMode, setIsStandardMode] = useState(true);
 
   // Charger la fiche depuis le storage
   useEffect(() => {
@@ -47,12 +48,35 @@ export default function SheetEditor() {
           setFicheData(null);
           return;
       }
+
       setIsLoading(true);
       try {
+        if (id === 'blank') {
+          const blankData: FicheData = {
+            id: 'new',
+            titre: 'Nouveau Modèle Personnalisé',
+            numeroFiche: '',
+            enTete: { matiere: '', theme: '', objectifGeneral: '', classe: '', temps: '', date: new Date().toISOString().split('T')[0] },
+            miseEnSituation: { rappel: '', prerequis: '', motivation: '' },
+            sequences: [],
+            syntheseLecon: '',
+            evaluationFormative: '',
+            documentEleve: { activite: '', objectifGeneral: '', consigne: '', texte: '', support: '', taches: '', strategie: { travailGroupe: '', pleniere: '' } },
+            ficheSynthese: { point1: '', point2: '', point3: '' },
+            extraPages: []
+          };
+          setFicheData(blankData);
+          setSections([]);
+          setIsStandardMode(false);
+          setIsLoading(false);
+          setActiveSection('blank-start');
+          return;
+        }
+
         const content = await storageService.getFicheById(id);
 
         if (content) {
-          // Adapter les données si nécessaire
+          setIsStandardMode(content.sequences.length > 0 || content.enTete.matiere !== ''); 
           const adaptedData: FicheData = {
             ...content,
             id: content.id || id,
@@ -63,15 +87,19 @@ export default function SheetEditor() {
           setFicheData(adaptedData);
 
           // Construire les sections à partir des données chargées
-          const newSections: any[] = [
-            { id: 'page1', label: '1. Fiche Pédagogique', type: 'main' },
-            { id: 'en-tete', label: 'En-tête', type: 'sub', parentId: 'page1' },
-            { id: 'situation', label: 'Mise en situation', type: 'sub', parentId: 'page1' },
-            { id: 'sequences', label: 'Séquences (Tableau)', type: 'sub', parentId: 'page1' },
-            { id: 'page2', label: '2. Document Élève', type: 'main' },
-            { id: 'page3', label: '3. Fiche de Synthèse', type: 'main' },
-            { id: 'page4', label: '4. Évaluation Formative', type: 'main' }
-          ];
+          const newSections: any[] = [];
+          
+          if (content.sequences.length > 0 || content.enTete.matiere !== '') {
+            newSections.push(
+              { id: 'page1', label: '1. Fiche Pédagogique', type: 'main' },
+              { id: 'en-tete', label: 'En-tête', type: 'sub', parentId: 'page1' },
+              { id: 'situation', label: 'Mise en situation', type: 'sub', parentId: 'page1' },
+              { id: 'sequences', label: 'Séquences (Tableau)', type: 'sub', parentId: 'page1' },
+              { id: 'page2', label: '2. Document Élève', type: 'main' },
+              { id: 'page3', label: '3. Fiche de Synthèse', type: 'main' },
+              { id: 'page4', label: '4. Évaluation Formative', type: 'main' }
+            );
+          }
 
           if (adaptedData.extraPages) {
             adaptedData.extraPages.forEach((p: any) => {
@@ -410,13 +438,32 @@ export default function SheetEditor() {
               <div className="absolute left-0 top-0 bottom-0 w-1 bg-edu-red/10"></div>
 
               <div className="p-16">
-                {/* En-tête */}
-                <div
-                  id="en-tete"
-                  className={`relative group mb-12 p-6 transition-all border-2 ${activeSection === 'en-tete' ? 'border-edu-black bg-edu-light/5' : 'border-transparent hover:border-edu-light/50'
-                    }`}
-                  onClick={() => setActiveSection('en-tete')}
-                >
+                {/* Empty State / Blank Start */}
+                {sections.length === 0 && (
+                  <div className="flex flex-col items-center justify-center min-h-[400px] border-2 border-dashed border-edu-light rounded-lg p-12 text-center">
+                    <div className="w-16 h-16 bg-edu-light/10 rounded-full flex items-center justify-center mb-6">
+                      <FileText size={32} className="text-edu-dark" />
+                    </div>
+                    <h2 className="font-serif text-2xl text-edu-black mb-4">Votre page est prête.</h2>
+                    <p className="text-edu-dark mb-8 max-w-md">Commencez à construire votre modèle en ajoutant des sections personnalisées. Chaque section peut contenir du texte, des tableaux ou des images.</p>
+                    <button 
+                      onClick={addNewSection}
+                      className="flex items-center gap-2 px-8 py-3 bg-edu-red text-white font-bold rounded-[2px] hover:bg-[#5a0808] transition-all shadow-lg"
+                    >
+                      <Plus size={18} /> CRÉER MA PREMIÈRE PARTIE
+                    </button>
+                  </div>
+                )}
+                {/* Sections Standard (uniquement en mode standard) */}
+                {isStandardMode && ficheData && (
+                  <>
+                    {/* En-tête */}
+                    <div
+                      id="en-tete"
+                      className={`relative group mb-12 p-6 transition-all border-2 ${activeSection === 'en-tete' ? 'border-edu-black bg-edu-light/5' : 'border-transparent hover:border-edu-light/50'
+                        }`}
+                      onClick={() => setActiveSection('en-tete')}
+                    >
                   <div className="absolute -left-12 top-0 opacity-0 group-hover:opacity-100 transition-opacity">
                     <div className="bg-edu-black text-white text-[10px] font-bold px-2 py-1 rotate-[-90deg] origin-right">EN-TÊTE</div>
                   </div>
@@ -779,7 +826,9 @@ export default function SheetEditor() {
                       onChange={(html) => updateFicheData(['evaluationFormative'], html)}
                     />
                   </div>
-                </div>
+                    </div>
+                  </>
+                )}
 
                 {/* EXTRA PAGES */}
                 {(ficheData.extraPages || []).map((page, index) => (
@@ -814,15 +863,13 @@ export default function SheetEditor() {
                     </div>
 
                     <div className="space-y-4">
-                      <textarea
-                        value={page.content}
-                        onChange={(e) => {
+                      <RichTextEditor
+                        content={page.content}
+                        onChange={(html) => {
                           const newPages = [...(ficheData.extraPages || [])];
-                          newPages[index] = { ...newPages[index], content: e.target.value };
+                          newPages[index] = { ...newPages[index], content: html };
                           updateFicheData(['extraPages'], newPages);
                         }}
-                        className="w-full bg-white border border-edu-light/50 focus:border-edu-red outline-none p-4 text-sm min-h-[400px] transition-colors shadow-inner"
-                        placeholder="Contenu de votre page personnalisée..."
                       />
                     </div>
                   </div>

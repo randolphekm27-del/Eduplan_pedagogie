@@ -77,7 +77,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
                 if (sessionError) {
                     console.error("AuthProvider: Session fetch error:", sessionError);
-                    if (isMounted) setLoading(false);
                     return;
                 }
 
@@ -87,12 +86,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     setUser(currentSession.user);
                     await loadUserProfile(currentSession.user.id);
                 } else {
-                    console.log("AuthProvider: No active session found.");
-                    if (isMounted) {
-                        setSession(null);
-                        setUser(null);
-                        setProfile(null);
-                    }
+                    console.log("AuthProvider: No active session found during initialization.");
+                    setSession(null);
+                    setUser(null);
+                    setProfile(null);
                 }
             } catch (err) {
                 console.error("AuthProvider: Critical initialization error:", err);
@@ -106,55 +103,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         initializeAuth();
 
-        // Prevent multiple subscriptions (useRef stores unsubscribe)
-        const authSubRef = { unsubscribe: undefined as any };
-        const subscribe = () => {
-            // Clean previous if any
-            if (authSubRef.unsubscribe) {
-                try { authSubRef.unsubscribe(); } catch (e) { /* ignore */ }
-                authSubRef.unsubscribe = undefined;
-            }
+        // Listen for subsequent auth changes
+        const { data: authData } = supabase.auth.onAuthStateChange(async (event, newSession) => {
+            if (!isMounted) return;
+            console.log("AuthProvider: Auth State Change Event:", event);
 
-            const { data: authData } = supabase.auth.onAuthStateChange((event, newSession) => {
-                if (!isMounted) return;
-                console.log("AuthProvider: Event", event);
-
-                // set session immediately
-                setSession(newSession);
-
-                if (newSession?.user) {
-                    setUser(newSession.user);
-                    // Non-blocking profile load
-                    loadUserProfile(newSession.user.id).catch((err) => console.error('onAuthStateChange: loadUserProfile', err));
-
-                    // Silent last_login update
-                    supabase.from("user_profiles")
-                        .update({ last_login: new Date().toISOString() })
-                        .eq("id", newSession.user.id)
-                        .then(({ error }) => {
-                            if (error) console.warn("AuthProvider: Could not update last_login:", error);
-                        });
-                } else {
-                    setUser(null);
-                    setProfile(null);
+            // Only update if we're not currently in the initial load 
+            // to avoid mid-initialization state updates
+            setSession(newSession);
+            
+            if (newSession?.user) {
+                setUser(newSession.user);
+                // In case of SIGNED_IN event (like after a signup or login), we ensure profile is loaded
+                if (event === 'SIGNED_IN') {
+                    await loadUserProfile(newSession.user.id);
                 }
-
-                if (isMounted) setLoading(false);
-            });
-
-            authSubRef.unsubscribe = authData?.subscription?.unsubscribe;
-            return authSubRef;
-        };
-
-        const sub = subscribe();
+            } else {
+                setUser(null);
+                setProfile(null);
+            }
+        });
 
         return () => {
             isMounted = false;
-            try {
-                if (sub && typeof sub.unsubscribe === 'function') sub.unsubscribe();
-            } catch (e) {
-                /* ignore unsubscribe errors */
-            }
+            authData?.subscription?.unsubscribe();
         };
     }, []);
 

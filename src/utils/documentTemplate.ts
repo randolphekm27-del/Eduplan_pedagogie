@@ -236,6 +236,7 @@ export function generateDocumentHTML(data: FicheData): string {
     </div>
   `).join('');
 
+  const hasPedagogicalContent = data.sequences.length > 0 || data.enTete.theme || data.enTete.matiere;
   const hasStudentContent = data.documentEleve.texte || data.documentEleve.support || data.documentEleve.taches || data.documentEleve.activite;
   const hasSynthesisContent = data.ficheSynthese.point1 || data.ficheSynthese.point2 || data.ficheSynthese.point3 || data.syntheseLecon;
 
@@ -249,6 +250,7 @@ export function generateDocumentHTML(data: FicheData): string {
 </head>
 <body>
     <!-- PAGE 1: FICHE PEDAGOGIQUE (LANDSCAPE) -->
+    ${hasPedagogicalContent ? `
     <div class="page page-landscape">
         <h2>FICHE PÉDAGOGIQUE N° ${data.numeroFiche || ''}</h2>
         <table class="header-table">
@@ -306,6 +308,7 @@ export function generateDocumentHTML(data: FicheData): string {
             <div class="content-area prose">${data.syntheseLecon}</div>
         </div>
     </div>
+    ` : ''}
 
     <!-- PAGE 2: DOCUMENT ELEVE -->
     ${hasStudentContent ? `
