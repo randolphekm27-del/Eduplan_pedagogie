@@ -295,31 +295,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 throw new Error("Aucun utilisateur créé");
             }
 
-            console.log("✅ AuthProvider.signup: Auth user created", signupData.user.id);
+            // 2. Profile creation is handled by the database trigger (on_auth_user_created).
+            // We wait a moment for the trigger to complete and then load the profile.
+            console.log("✅ AuthProvider.signup: Waiting for profile trigger...");
 
-            // 2. Mettre à jour le profil (le trigger l'aura déjà créé)
-            console.log("🟡 AuthProvider.signup: Updating user_profiles record...");
-            const { error: profileError } = await supabase
-                .from("user_profiles")
-                .upsert({
-                    id: signupData.user.id,
-                    email,
-                    firstname: firstName,
-                    lastname: lastName,
-                    role,
-                    specialties: subject ? [subject] : [],
-                }, { onConflict: 'id' });
-
-            if (profileError) {
-                console.error("⚠️ AuthProvider.signup: Profile error:", profileError);
-            } else {
-                console.log("✅ AuthProvider.signup: Profile record ready");
-            }
 
             setUser(signupData.user);
             if (signupData.session) {
                 setSession(signupData.session);
             }
+
 
             // 3. Charger le profil pour vérifier
             console.log("🟡 AuthProvider.signup: Loading profile for verification...");

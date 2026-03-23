@@ -46,9 +46,18 @@ export default function SignupPage() {
             navigate('/login');
         } catch (error) {
             console.error('Signup error:', error);
-            toast.error('Erreur d\'inscription', {
-                description: error instanceof Error ? error.message : 'Une erreur est survenue lors de l\'inscription'
-            });
+            const errorMessage = error instanceof Error ? error.message : "Une erreur est survenue lors de l'inscription";
+            
+            if (errorMessage.includes('User already registered') || errorMessage.includes('already exists')) {
+                toast.error('Compte déjà existant', {
+                    description: 'Cet email est déjà utilisé. Veuillez vous connecter ou réinitialiser votre mot de passe.'
+                });
+                navigate('/login');
+            } else {
+                toast.error('Erreur d\'inscription', {
+                    description: errorMessage
+                });
+            }
         } finally {
             setIsLoading(false);
         }
