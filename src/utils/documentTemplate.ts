@@ -1,10 +1,9 @@
-
 export interface Sequence {
   id: string;
   numero: string;
   objectif: string;
   taches: string;
-  organisations: string; 
+  organisations: string;
   savoirs: string;
   materiel: string;
   duree: string;
@@ -16,6 +15,9 @@ export interface ExtraPage {
   title: string;
   content: string;
 }
+
+export type PageOrientation = 'portrait' | 'landscape';
+export type PageOrientationMap = Record<string, PageOrientation>;
 
 export interface FicheData {
   id: string;
@@ -55,6 +57,14 @@ export interface FicheData {
     point3: string;
   };
   extraPages?: ExtraPage[];
+  pageOrientations?: PageOrientationMap;
+}
+
+export interface DocumentPageDefinition {
+  id: string;
+  title: string;
+  orientation: PageOrientation;
+  html: string;
 }
 
 export const DOCUMENT_STYLES = `
@@ -67,14 +77,15 @@ export const DOCUMENT_STYLES = `
   @page portrait {
     size: A4 portrait;
   }
-  
+
   body {
     font-family: 'Inter', Arial, Helvetica, sans-serif;
     margin: 0;
     line-height: 1.5;
     color: #1a1a1a;
+    background: white;
   }
-  
+
   .page {
     background: white;
     width: 210mm;
@@ -86,11 +97,11 @@ export const DOCUMENT_STYLES = `
     position: relative;
     overflow: hidden;
   }
-  
+
   .page:last-child {
     page-break-after: avoid !important;
   }
-  
+
   .page-landscape {
     width: 297mm;
     min-height: 210mm;
@@ -113,11 +124,11 @@ export const DOCUMENT_STYLES = `
     border-bottom: 2px solid #000;
     padding-bottom: 10px;
   }
-  
+
   .section {
     margin-top: 20px;
   }
-  
+
   .section-title {
     font-weight: 800;
     font-size: 11pt;
@@ -134,7 +145,7 @@ export const DOCUMENT_STYLES = `
     margin-top: 10px;
     table-layout: fixed;
   }
-  
+
   th, td {
     border: 1px solid #000;
     padding: 6px 8px;
@@ -143,7 +154,7 @@ export const DOCUMENT_STYLES = `
     word-wrap: break-word;
     overflow-wrap: break-word;
   }
-  
+
   th {
     text-align: center;
     background-color: #f2f2f2;
@@ -151,24 +162,23 @@ export const DOCUMENT_STYLES = `
     text-transform: uppercase;
     font-size: 9pt;
   }
-  
+
   .header-table td {
     border: none;
     padding: 3px 0;
     font-size: 10pt;
   }
-  
+
   .center {
     text-align: center;
   }
-  
+
   .content-area {
     min-height: 50px;
     margin-top: 5px;
     font-size: 10pt;
   }
-  
-  /* Rich Text Styles */
+
   .prose {
     font-size: 10pt;
     line-height: 1.4;
@@ -177,35 +187,11 @@ export const DOCUMENT_STYLES = `
   .prose h1 { font-size: 16pt; margin: 15px 0 10px 0; font-weight: bold; }
   .prose h2 { font-size: 14pt; margin: 12px 0 8px 0; font-weight: bold; text-align: left; border-bottom: none; text-transform: none; }
   .prose h3 { font-size: 12pt; margin: 10px 0 5px 0; font-weight: bold; }
-  
-  .prose ul, .prose ol {
-    margin: 0 0 10px 20px;
-    padding: 0;
-  }
-  
-  .prose li {
-    margin-bottom: 4px;
-  }
-
-  .prose table {
-    width: 100% !important;
-    border-collapse: collapse;
-    margin: 10px 0;
-    table-layout: auto !important; /* Allow auto width for inner tables */
-  }
-  
-  .prose table td, .prose table th {
-    border: 1px solid #000;
-    padding: 4px 6px;
-    min-width: 20px;
-  }
-
-  .prose img {
-    max-width: 100%;
-    height: auto;
-    display: block;
-    margin: 10px auto;
-  }
+  .prose ul, .prose ol { margin: 0 0 10px 20px; padding: 0; }
+  .prose li { margin-bottom: 4px; }
+  .prose table { width: 100% !important; border-collapse: collapse; margin: 10px 0; table-layout: auto !important; }
+  .prose table td, .prose table th { border: 1px solid #000; padding: 4px 6px; min-width: 20px; }
+  .prose img { max-width: 100%; height: auto; display: block; margin: 10px auto; }
 
   .watermark {
     position: absolute;
@@ -227,10 +213,28 @@ export const DOCUMENT_STYLES = `
   }
 `;
 
-export function generateDocumentHTML(data: FicheData, showWatermark: boolean = false): string {
+function getPageClass(orientation: PageOrientation) {
+  return orientation === 'landscape' ? 'page page-landscape' : 'page page-portrait';
+}
+
+function resolveOrientation(data: FicheData, pageId: string, fallback: PageOrientation): PageOrientation {
+  return data.pageOrientations?.[pageId] || fallback;
+}
+
+function renderPageShell(pageId: string, title: string, orientation: PageOrientation, innerHTML: string, watermarkHTML: string) {
+  return {
+    id: pageId,
+    title,
+    orientation,
+    html: `<div class="${getPageClass(orientation)}">${watermarkHTML}${innerHTML}</div>`
+  } satisfies DocumentPageDefinition;
+}
+
+export function buildDocumentPages(data: FicheData, showWatermark: boolean = false): DocumentPageDefinition[] {
   const watermarkHTML = showWatermark ? '<div class="watermark">EDUPLAN GRATUIT</div>' : '';
-  
-  const sequencesRows = data.sequences.map(seq => `
+  const pages: DocumentPageDefinition[] = [];
+
+  const sequencesRows = data.sequences.map((seq) => `
     <tr>
       <td class="center" style="width:5%">${seq.numero}</td>
       <td style="width:18%">${seq.objectif}</td>
@@ -243,159 +247,169 @@ export function generateDocumentHTML(data: FicheData, showWatermark: boolean = f
     </tr>
   `).join('');
 
-  // Generate extra pages HTML
-  const extraPagesHTML = (data.extraPages || []).map(page => `
-    <div class="page page-portrait">
-        ${watermarkHTML}
-        <h2>${page.title.toUpperCase()}</h2>
-        <div class="section">
-            <div class="content-area prose">${page.content}</div>
-        </div>
-    </div>
-  `).join('');
-
   const hasPedagogicalContent = data.sequences.length > 0 || data.enTete.theme || data.enTete.matiere;
   const hasStudentContent = data.documentEleve.texte || data.documentEleve.support || data.documentEleve.taches || data.documentEleve.activite;
   const hasSynthesisContent = data.ficheSynthese.point1 || data.ficheSynthese.point2 || data.ficheSynthese.point3 || data.syntheseLecon;
+
+  if (hasPedagogicalContent) {
+    const orientation = resolveOrientation(data, 'page1', 'landscape');
+    pages.push(renderPageShell(
+      'page1',
+      '1. Fiche pédagogique',
+      orientation,
+      `
+        <h2>FICHE PÉDAGOGIQUE N° ${data.numeroFiche || ''}</h2>
+        <table class="header-table">
+          <tr>
+            <td style="width:15%"><strong>MATIÈRE :</strong></td><td style="width:35%">${data.enTete.matiere}</td>
+            <td style="width:15%"><strong>CLASSE :</strong></td><td style="width:35%">${data.enTete.classe}</td>
+          </tr>
+          <tr>
+            <td><strong>THÈME :</strong></td><td>${data.enTete.theme}</td>
+            <td><strong>TEMPS :</strong></td><td>${data.enTete.temps}</td>
+          </tr>
+          <tr>
+            <td><strong>OBJECTIF GÉNÉRAL :</strong></td><td colspan="3">${data.enTete.objectifGeneral}</td>
+          </tr>
+          <tr>
+            <td><strong>DATE :</strong></td><td colspan="3">${data.enTete.date}</td>
+          </tr>
+        </table>
+
+        <div class="section">
+          <span class="section-title">I - MISE EN SITUATION</span>
+          <table class="header-table" style="margin-left: 20px;">
+            <tr><td style="width:12%"><strong>Rappel :</strong></td><td>${data.miseEnSituation.rappel}</td></tr>
+            <tr><td><strong>Pré-requis :</strong></td><td>${data.miseEnSituation.prerequis}</td></tr>
+            <tr><td><strong>Motivation :</strong></td><td>${data.miseEnSituation.motivation}</td></tr>
+          </table>
+        </div>
+
+        <div class="section">
+          <span class="section-title">II - DÉROULEMENT DE LA LEÇON</span>
+          <table>
+            <thead>
+              <tr>
+                <th rowspan="2" style="width:5%">SQ</th>
+                <th rowspan="2" style="width:18%">OBJECTIFS OPÉRATIONNELS</th>
+                <th colspan="2" style="width:30%">STRATÉGIE PÉDAGOGIQUE</th>
+                <th rowspan="2" style="width:15%">SAVOIRS ASSOCIÉS</th>
+                <th rowspan="2" style="width:15%">MATÉRIEL DIDACTIQUE</th>
+                <th rowspan="2" style="width:7%">DURÉE</th>
+                <th rowspan="2" style="width:10%">OBSERV.</th>
+              </tr>
+              <tr>
+                <th style="width:15%">Tâches élèves</th>
+                <th style="width:15%">Organisation</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${sequencesRows}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="section">
+          <span class="section-title">III - SYNTHÈSE COLLECTIVE</span>
+          <div class="content-area prose">${data.syntheseLecon}</div>
+        </div>
+      `,
+      watermarkHTML
+    ));
+  }
+
+  if (hasStudentContent) {
+    const orientation = resolveOrientation(data, 'page2', 'portrait');
+    pages.push(renderPageShell(
+      'page2',
+      '2. Document élève',
+      orientation,
+      `
+        <h2>DOCUMENT ÉLÈVE</h2>
+        <div class="section">
+          <p><strong>ACTIVITÉ :</strong> ${data.documentEleve.activite}</p>
+          <p><strong>OBJECTIF :</strong> ${data.documentEleve.objectifGeneral}</p>
+        </div>
+        ${data.documentEleve.texte ? `<div class="section"><strong>ORIENTATION / CONTEXTE :</strong><div class="content-area prose">${data.documentEleve.texte}</div></div>` : ''}
+        ${data.documentEleve.support ? `<div class="section"><strong>SUPPORTS DE TRAVAIL :</strong><div class="content-area prose">${data.documentEleve.support}</div></div>` : ''}
+        ${data.documentEleve.taches ? `<div class="section"><strong>TRAVAIL À FAIRE :</strong><div class="content-area prose">${data.documentEleve.taches}</div></div>` : ''}
+        <div class="section">
+          <strong>MODALITÉS DE RÉALISATION :</strong>
+          <table style="width:60%">
+            <tr><td style="width:40%"><strong>En groupe :</strong></td><td>${data.documentEleve.strategie.travailGroupe}</td></tr>
+            <tr><td><strong>Restitution :</strong></td><td>${data.documentEleve.strategie.pleniere}</td></tr>
+          </table>
+        </div>
+      `,
+      watermarkHTML
+    ));
+  }
+
+  if (hasSynthesisContent) {
+    const orientation = resolveOrientation(data, 'page3', 'portrait');
+    pages.push(renderPageShell(
+      'page3',
+      '3. Fiche de synthèse',
+      orientation,
+      `
+        <h2>FICHE DE SYNTHÈSE</h2>
+        ${data.ficheSynthese.point1 ? `<div class="section"><div class="content-area prose">${data.ficheSynthese.point1}</div></div>` : ''}
+        ${data.ficheSynthese.point2 ? `<div class="section"><div class="content-area prose">${data.ficheSynthese.point2}</div></div>` : ''}
+        ${data.ficheSynthese.point3 ? `<div class="section"><div class="content-area prose">${data.ficheSynthese.point3}</div></div>` : ''}
+      `,
+      watermarkHTML
+    ));
+  }
+
+  if (data.evaluationFormative) {
+    const orientation = resolveOrientation(data, 'page4', 'portrait');
+    pages.push(renderPageShell(
+      'page4',
+      '4. Évaluation formative',
+      orientation,
+      `
+        <h2>ÉVALUATION FORMATIVE</h2>
+        <div class="section">
+          <div class="content-area prose">${data.evaluationFormative}</div>
+        </div>
+      `,
+      watermarkHTML
+    ));
+  }
+
+  (data.extraPages || []).forEach((page, index) => {
+    const pageId = page.id || `extra-${index + 1}`;
+    const orientation = resolveOrientation(data, pageId, 'portrait');
+    pages.push(renderPageShell(
+      pageId,
+      page.title || `Page supplémentaire ${index + 1}`,
+      orientation,
+      `
+        <h2>${(page.title || `Page supplémentaire ${index + 1}`).toUpperCase()}</h2>
+        <div class="section">
+          <div class="content-area prose">${page.content}</div>
+        </div>
+      `,
+      watermarkHTML
+    ));
+  });
+
+  return pages;
+}
+
+export function generateDocumentHTML(data: FicheData, showWatermark: boolean = false): string {
+  const pages = buildDocumentPages(data, showWatermark);
 
   return `
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <title>${data.titre}</title>
-    <style>${DOCUMENT_STYLES}</style>
+  <meta charset="UTF-8">
+  <title>${data.titre}</title>
+  <style>${DOCUMENT_STYLES}</style>
 </head>
 <body>
-    <!-- PAGE 1: FICHE PEDAGOGIQUE (LANDSCAPE) -->
-    ${hasPedagogicalContent ? `
-    <div class="page page-landscape">
-        ${watermarkHTML}
-        <h2>FICHE PÉDAGOGIQUE N° ${data.numeroFiche || ''}</h2>
-        <table class="header-table">
-            <tr>
-              <td style="width:15%"><strong>MATIÈRE :</strong></td><td style="width:35%">${data.enTete.matiere}</td>
-              <td style="width:15%"><strong>CLASSE :</strong></td><td style="width:35%">${data.enTete.classe}</td>
-            </tr>
-            <tr>
-              <td><strong>THÈME :</strong></td><td>${data.enTete.theme}</td>
-              <td><strong>TEMPS :</strong></td><td>${data.enTete.temps}</td>
-            </tr>
-            <tr>
-              <td><strong>OBJECTIF GÉNÉRAL :</strong></td><td colspan="3">${data.enTete.objectifGeneral}</td>
-            </tr>
-            <tr>
-              <td><strong>DATE :</strong></td><td colspan="3">${data.enTete.date}</td>
-            </tr>
-        </table>
-
-        <div class="section">
-            <span class="section-title">I - MISE EN SITUATION</span>
-            <table class="header-table" style="margin-left: 20px;">
-                <tr><td style="width:12%"><strong>Rappel :</strong></td><td>${data.miseEnSituation.rappel}</td></tr>
-                <tr><td><strong>Pré-requis :</strong></td><td>${data.miseEnSituation.prerequis}</td></tr>
-                <tr><td><strong>Motivation :</strong></td><td>${data.miseEnSituation.motivation}</td></tr>
-            </table>
-        </div>
-
-        <div class="section">
-            <span class="section-title">II - DÉROULEMENT DE LA LEÇON</span>
-            <table>
-                <thead>
-                    <tr>
-                        <th rowspan="2" style="width:5%">SQ</th>
-                        <th rowspan="2" style="width:18%">OBJECTIFS OPERATIONNELS</th>
-                        <th colspan="2" style="width:30%">STRATEGIE PEDAGOGIQUE</th>
-                        <th rowspan="2" style="width:15%">SAVOIRS ASSOCIES</th>
-                        <th rowspan="2" style="width:15%">MATERIEL DIDACTIQUE</th>
-                        <th rowspan="2" style="width:7%">DURÉE</th>
-                        <th rowspan="2" style="width:10%">OBSERV.</th>
-                    </tr>
-                    <tr>
-                        <th style="width:15%">Tâches élèves</th>
-                        <th style="width:15%">Organisation</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${sequencesRows}
-                </tbody>
-            </table>
-        </div>
-
-        <div class="section">
-            <span class="section-title">III - SYNTHÈSE COLLECTIVE</span>
-            <div class="content-area prose">${data.syntheseLecon}</div>
-        </div>
-    </div>
-    ` : ''}
-
-    <!-- PAGE 2: DOCUMENT ELEVE -->
-    ${hasStudentContent ? `
-    <div class="page page-portrait">
-        ${watermarkHTML}
-        <h2>DOCUMENT ÉLÈVE</h2>
-        <div class="section">
-            <p><strong>ACTIVITÉ :</strong> ${data.documentEleve.activite}</p>
-            <p><strong>OBJECTIF :</strong> ${data.documentEleve.objectifGeneral}</p>
-        </div>
-        ${data.documentEleve.texte ? `
-        <div class="section">
-            <strong>ORIENTATION / CONTEXTE :</strong>
-            <div class="content-area prose">${data.documentEleve.texte}</div>
-        </div>` : ''}
-        ${data.documentEleve.support ? `
-        <div class="section">
-            <strong>SUPPORTS DE TRAVAIL :</strong>
-            <div class="content-area prose">${data.documentEleve.support}</div>
-        </div>` : ''}
-        ${data.documentEleve.taches ? `
-        <div class="section">
-            <strong>TRAVAIL À FAIRE :</strong>
-            <div class="content-area prose">${data.documentEleve.taches}</div>
-        </div>` : ''}
-        <div class="section">
-            <strong>MODALITÉS DE RÉALISATION :</strong>
-            <table style="width:60%">
-                <tr><td style="width:40%"><strong>En groupe :</strong></td><td>${data.documentEleve.strategie.travailGroupe}</td></tr>
-                <tr><td><strong>Restitution :</strong></td><td>${data.documentEleve.strategie.pleniere}</td></tr>
-            </table>
-        </div>
-    </div>
-    ` : ''}
-
-    <!-- PAGE 3: FICHE DE SYNTHESE -->
-    ${hasSynthesisContent ? `
-    <div class="page page-portrait">
-        ${watermarkHTML}
-        <h2>FICHE DE SYNTHÈSE</h2>
-        ${data.ficheSynthese.point1 ? `
-        <div class="section">
-            <div class="content-area prose">${data.ficheSynthese.point1}</div>
-        </div>` : ''}
-        ${data.ficheSynthese.point2 ? `
-        <div class="section">
-            <div class="content-area prose">${data.ficheSynthese.point2}</div>
-        </div>` : ''}
-        ${data.ficheSynthese.point3 ? `
-        <div class="section">
-            <div class="content-area prose">${data.ficheSynthese.point3}</div>
-        </div>` : ''}
-    </div>
-    ` : ''}
-
-    <!-- PAGE 4: EVALUATION FORMATIVE -->
-    ${data.evaluationFormative ? `
-    <div class="page page-portrait">
-        ${watermarkHTML}
-        <h2>ÉVALUATION FORMATIVE</h2>
-        <div class="section">
-            <div class="content-area prose">${data.evaluationFormative}</div>
-        </div>
-    </div>
-    ` : ''}
-
-    <!-- EXTRA PAGES -->
-    ${extraPagesHTML}
+  ${pages.map((page) => page.html).join('')}
 </body>
 </html>
   `;

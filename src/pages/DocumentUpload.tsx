@@ -45,7 +45,7 @@ export default function DocumentUpload() {
       toast.error("Fonctionnalité Premium", {
         description: "L'import de documents est réservé aux abonnés Pro. Gagnez du temps en passant au niveau supérieur !",
         action: {
-          label: "Devenir Pro",
+          label: "Voir les offres",
           onClick: () => navigate('/pricing')
         }
       });
@@ -85,7 +85,7 @@ export default function DocumentUpload() {
       toast.error("Fonctionnalité Premium", {
         description: "L'analyse de texte par IA est réservée aux abonnés Pro.",
         action: {
-          label: "Devenir Pro",
+          label: "Voir les offres",
           onClick: () => navigate('/pricing')
         }
       });

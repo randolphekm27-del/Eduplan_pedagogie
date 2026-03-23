@@ -126,13 +126,13 @@ export default function ConditionsGénéralesPage() {
             features: ["10 fiches pédagogiques", "Génération IA basique", "Export PDF", "Support communautaire"]
           },
           {
-            name: "Pro",
+            name: "Standard",
             price: "4,90€/mois",
             features: ["Fiches illimitées", "Export DOCX", "Analyses avancées", "Support prioritaire", "Collaboration"]
           },
           {
             name: "Établissement",
-            price: "Sur devis",
+            price: "5 000 XOF/mois",
             features: ["Comptes illimités", "Hébergement dédié", "Formation équipe", "Support 24/7", "API dédiée"]
           }
         ],

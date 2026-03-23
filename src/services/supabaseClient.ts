@@ -26,7 +26,7 @@ export interface UserProfile {
     role: 'teacher' | 'student' | 'admin';
     created_at: string;
     updated_at: string;
-    tier?: 'free' | 'pro' | 'institution';
+    tier?: 'free' | 'standard' | 'premium' | 'pro' | 'institution';
     subscription_status?: 'active' | 'expired' | 'cancelled';
     lessons_count?: number;
     ai_calls_count?: number;

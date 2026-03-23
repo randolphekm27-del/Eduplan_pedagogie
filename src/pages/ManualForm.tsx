@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { FREE_PLAN_LIMIT } from '../utils/pricingPlans';
 import { ArrowLeft, Plus, ChevronDown, ChevronUp } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
@@ -36,11 +37,11 @@ export default function ManualForm() {
     }
 
     // Restriction Plan Gratuit
-    if (profile?.tier === 'free' && profile.lessons_count >= 3) {
+    if (profile?.tier === 'free' && profile.lessons_count >= FREE_PLAN_LIMIT) {
       toast.error("Limite atteinte", {
-        description: "Vous avez atteint la limite de 3 fiches pour le plan Gratuit (Populaire). Passez au plan Pro pour continuer !",
+        description: "Vous avez atteint la limite de 5 fiches pour le plan Gratuit. Passez au plan Standard ou Premium pour continuer !",
         action: {
-          label: "Voir les tarifs",
+          label: "Voir les offres",
           onClick: () => navigate('/pricing')
         }
       });

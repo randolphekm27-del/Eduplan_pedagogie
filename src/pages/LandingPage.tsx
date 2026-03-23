@@ -1,71 +1,77 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { GraduationCap, Settings, Bot, Upload, Edit3, CheckCircle2, ChevronRight, FileText } from 'lucide-react';
+import { Link, Navigate } from 'react-router-dom';
+import { GraduationCap, Bot, Upload, Edit3, CheckCircle2, ChevronRight, ArrowUpRight, Sparkles } from 'lucide-react';
 import { motion } from 'motion/react';
-import { toast } from 'sonner';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { Footer } from '../components/Footer';
-
 import { ThemeToggle } from '../components/ThemeToggle';
-
 import { useAuth } from '../context/AuthContext';
-import { Navigate } from 'react-router-dom';
+import { pricingPlans, premiumBenefits } from '../utils/pricingPlans';
 
 export default function LandingPage() {
   const { user, profile, loading } = useAuth();
 
-  // Redirect to dashboard only when auth and app profile are both ready.
   if (!loading && user && profile) {
     return <Navigate to="/dashboard" replace />;
   }
 
   return (
     <div className="min-h-screen bg-edu-bg font-sans text-edu-black selection:bg-edu-red selection:text-edu-bg transition-colors duration-500">
-      {/* Header */}
       <header className="sticky top-0 z-50 bg-edu-bg/90 backdrop-blur-md border-b border-edu-light/20 transition-colors duration-500">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <GraduationCap className="text-edu-red" size={28} />
             <span className="font-serif text-2xl font-bold tracking-wide">EduPlan</span>
           </div>
-          
+
           <nav className="hidden md:flex items-center gap-8">
-            <a href="#features" className="text-sm font-medium hover:text-edu-red transition-all duration-200 border-b-2 border-transparent hover:border-edu-red">Fonctionnalit√©s</a>
+            <a href="#features" className="text-sm font-medium hover:text-edu-red transition-all duration-200 border-b-2 border-transparent hover:border-edu-red">FonctionnalitÈs</a>
+            <a href="#premium" className="text-sm font-medium hover:text-edu-red transition-all duration-200 border-b-2 border-transparent hover:border-edu-red">Premium</a>
             <a href="#pricing" className="text-sm font-medium hover:text-edu-red transition-all duration-200 border-b-2 border-transparent hover:border-edu-red">Tarifs</a>
             <Link to="/blog" className="text-sm font-medium hover:text-edu-red transition-all duration-200 border-b-2 border-transparent hover:border-edu-red">Blog</Link>
             <Link to="/login" className="text-sm font-medium hover:text-edu-red transition-all duration-200 border-b-2 border-transparent hover:border-edu-red">Connexion</Link>
           </nav>
-          
+
           <div className="flex items-center gap-4">
             <ThemeToggle />
+            <Link to="/pricing" className="hidden sm:block">
+              <Button variant="secondary" className="text-sm px-6 py-2.5">Voir les offres</Button>
+            </Link>
             <Link to="/login" className="hidden sm:block">
-              <Button variant="primary" className="text-sm px-6 py-2.5">Acc√©der √† la plateforme</Button>
+              <Button variant="primary" className="text-sm px-6 py-2.5">AccÈder ‡ la plateforme</Button>
             </Link>
           </div>
         </div>
       </header>
 
-      {/* Hero Section */}
-      <section className="pt-20 pb-32 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-16">
+      <section className="pt-20 pb-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-16">
         <div className="flex-1 text-center lg:text-left">
-          <motion.h1 
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="inline-flex items-center gap-2 bg-edu-red/10 px-4 py-2 rounded-full mb-6"
+          >
+            <Sparkles size={16} className="text-edu-red" />
+            <span className="text-sm font-medium text-edu-red">5 fiches gratuites par mois pour dÈmarrer</span>
+          </motion.div>
+          <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
             className="font-serif text-5xl lg:text-6xl leading-tight text-edu-black mb-6"
           >
-            Cr√©ez des fiches p√©dagogiques d'excellence en quelques minutes
+            CrÈez des fiches pÈdagogiques solides, puis passez en premium quand vous voulez aller plus loin
           </motion.h1>
-          <motion.p 
+          <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.1 }}
             className="text-lg text-edu-dark mb-10 max-w-2xl mx-auto lg:mx-0"
           >
-            L'assistant IA pour les professeurs de toutes disciplines : Lettres, Sciences, Histoire, Langues et fili√®res techniques.
+            EduPlan accompagne les enseignants avec un point d'entrÈe gratuit clair, puis deux offres payantes pensÈes pour accÈlÈrer la prÈparation, dÈbloquer l'IA et supprimer les limites qui freinent la production.
           </motion.p>
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
@@ -76,238 +82,151 @@ export default function LandingPage() {
                 Commencer gratuitement
               </Button>
             </Link>
-            <a href="#demo">
+            <Link to="/pricing">
               <Button variant="secondary" className="w-full sm:w-auto px-8 py-3.5">
-                Voir une d√©mo
+                DÈcouvrir les offres premium
               </Button>
-            </a>
+            </Link>
           </motion.div>
         </div>
-        
-        <motion.div 
+
+        <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.8, delay: 0.3 }}
-          className="flex-1 w-full max-w-lg relative"
+          className="flex-1 w-full max-w-xl"
         >
-          {/* Abstract Technical Visualization */}
-          <div className="absolute inset-0 bg-gradient-to-tr from-edu-light/20 to-transparent rounded-lg transform rotate-3"></div>
-          <div className="bg-[#F5F2ED] border border-edu-light shadow-[0_20px_50px_rgba(0,0,0,0.1)] rounded-[2px] p-6 relative z-10">
-            <div className="border-b-2 border-edu-black pb-4 mb-6">
-              <div className="h-6 w-3/4 bg-edu-light/30 rounded-sm mb-3"></div>
-              <div className="flex gap-4">
-                <div className="h-3 w-20 bg-edu-light/20 rounded-sm"></div>
-                <div className="h-3 w-24 bg-edu-light/20 rounded-sm"></div>
+          <div className="relative overflow-hidden rounded-[28px] border border-edu-light/40 bg-white shadow-[0_24px_80px_rgba(0,0,0,0.12)] p-8">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(126,11,11,0.12),_transparent_35%),radial-gradient(circle_at_bottom_left,_rgba(0,0,0,0.06),_transparent_30%)]" />
+            <div className="relative space-y-5">
+              <div className="flex items-center justify-between border-b border-edu-light/30 pb-4">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.3em] text-edu-dark/50">Parcours premium</p>
+                  <h3 className="font-serif text-2xl">MonÈtisation simple</h3>
+                </div>
+                <span className="rounded-full bg-edu-red px-3 py-1 text-xs font-bold text-white">Conversion</span>
               </div>
-            </div>
-            <div className="space-y-4">
-              <div className="flex items-center gap-3 border-b border-edu-light pb-2">
-                <span className="font-serif text-lg text-edu-red">I.</span>
-                <div className="h-4 w-1/2 bg-edu-light/30 rounded-sm"></div>
+              <div className="grid gap-3">
+                <div className="rounded-2xl border border-edu-light/30 bg-[#F5F2ED] p-4">
+                  <p className="text-xs uppercase tracking-[0.25em] text-edu-dark/50 mb-2">Gratuit</p>
+                  <p className="font-semibold text-edu-black">5 fiches par mois pour dÈcouvrir l'outil</p>
+                </div>
+                <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
+                  <p className="text-xs uppercase tracking-[0.25em] text-amber-700/70 mb-2">Standard</p>
+                  <p className="font-semibold text-edu-black">30 fiches par mois, IA, import et export HD</p>
+                </div>
+                <div className="rounded-2xl border border-edu-red/20 bg-edu-dark p-4 text-white">
+                  <p className="text-xs uppercase tracking-[0.25em] text-white/60 mb-2">Premium</p>
+                  <p className="font-semibold">Fiches illimitÈes et accËs complet aux fonctionnalitÈs avancÈes</p>
+                </div>
               </div>
-              <div className="h-20 w-full bg-edu-light/10 border border-edu-light/30 rounded-sm"></div>
-              
-              <div className="flex items-center gap-3 border-b border-edu-light pb-2 mt-6">
-                <span className="font-serif text-lg text-edu-red">II.</span>
-                <div className="h-4 w-1/3 bg-edu-light/30 rounded-sm"></div>
-              </div>
-              <table className="w-full border-collapse mt-2">
-                <tbody>
-                  <tr className="border-b border-edu-light/30">
-                    <td className="p-2 w-1/3"><div className="h-3 bg-edu-light/20 rounded-sm"></div></td>
-                    <td className="p-2"><div className="h-3 bg-edu-light/10 rounded-sm"></div></td>
-                  </tr>
-                  <tr className="border-b border-edu-light/30">
-                    <td className="p-2 w-1/3"><div className="h-3 bg-edu-light/20 rounded-sm"></div></td>
-                    <td className="p-2"><div className="h-3 bg-edu-light/10 rounded-sm"></div></td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-            {/* Floating Elements */}
-            <div className="absolute -right-8 top-1/4 bg-white border border-edu-light shadow-lg p-3 rounded-[2px] font-mono text-sm text-edu-red transform rotate-2">
-              E = mc¬≤
-            </div>
-            <div className="absolute -left-6 bottom-1/4 bg-white border border-edu-light shadow-lg p-3 rounded-[2px] font-serif text-xs text-edu-dark transform -rotate-3 italic">
-              ¬´ Je pense, donc je suis. ¬ª
             </div>
           </div>
         </motion.div>
       </section>
 
-      {/* Three Methods Section */}
       <section id="features" className="py-24 bg-white border-y border-edu-light/20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="font-serif text-4xl text-edu-black mb-4">Trois fa√ßons de cr√©er vos fiches techniques</h2>
-            <p className="text-edu-dark max-w-2xl mx-auto">Choisissez la m√©thode qui correspond le mieux √† votre flux de travail.</p>
+            <h2 className="font-serif text-4xl text-edu-black mb-4">Trois faÁons de crÈer vos fiches</h2>
+            <p className="text-edu-dark max-w-2xl mx-auto">Le mode gratuit vous laisse tester le cúur du produit. Les plans payants accÈlËrent ensuite tout le flux de production.</p>
           </div>
-          
+
           <div className="grid md:grid-cols-3 gap-8">
-            {/* Card 1 */}
             <Card variant="standard" className="group">
               <div className="w-16 h-16 bg-white border border-edu-light rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                 <Bot size={32} className="text-edu-red" />
               </div>
-              <h3 className="font-serif text-xl font-bold mb-3">Laissez l'IA s'occuper</h3>
-              <p className="text-edu-dark text-sm leading-relaxed">
-                D√©crivez votre cours en langage naturel. Notre IA sp√©cialis√©e g√©n√®re une fiche p√©dagogique compl√®te, structur√©e et pr√™te √† l'emploi.
-              </p>
+              <h3 className="font-serif text-xl font-bold mb-3">GÈnÈration assistÈe par IA</h3>
+              <p className="text-edu-dark text-sm leading-relaxed">Activez un vrai gain de temps avec les offres Standard et Premium pour produire une premiËre version structurÈe en quelques instants.</p>
             </Card>
 
-            {/* Card 2 */}
             <Card variant="standard" className="group">
               <div className="w-16 h-16 bg-white border border-edu-light rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                 <Upload size={32} className="text-edu-red" />
               </div>
-              <h3 className="font-serif text-xl font-bold mb-3">Transformez un document</h3>
-              <p className="text-edu-dark text-sm leading-relaxed">
-                Importez un PDF ou DOCX existant. L'IA extrait les informations cl√©s et les reformate selon les standards p√©dagogiques de votre discipline.
-              </p>
+              <h3 className="font-serif text-xl font-bold mb-3">Import de documents</h3>
+              <p className="text-edu-dark text-sm leading-relaxed">Transformez vos cours, notes et supports existants en fiches plus propres, plus rapides ‡ finaliser et prÍtes ‡ Ítre rÈutilisÈes.</p>
             </Card>
 
-            {/* Card 3 */}
             <Card variant="standard" className="group">
               <div className="w-16 h-16 bg-white border border-edu-light rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                 <Edit3 size={32} className="text-edu-red" />
               </div>
-              <h3 className="font-serif text-xl font-bold mb-3">Cr√©ez pas √† pas</h3>
-              <p className="text-edu-dark text-sm leading-relaxed">
-                Remplissez notre formulaire d√©taill√© et structur√©. Gardez un contr√¥le total sur chaque aspect de votre s√©quence p√©dagogique.
-              </p>
+              <h3 className="font-serif text-xl font-bold mb-3">CrÈation manuelle guidÈe</h3>
+              <p className="text-edu-dark text-sm leading-relaxed">Commencez gratuitement avec l'Èditeur pas ‡ pas, puis montez en gamme dËs que votre volume de fiches augmente.</p>
             </Card>
           </div>
         </div>
       </section>
 
-      {/* Format Preview Section */}
-      <section className="py-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16">
-          <h2 className="font-serif text-4xl text-edu-black mb-4">Des formats adaptatifs pour toutes vos mati√®res</h2>
-          <p className="text-edu-dark max-w-2xl mx-auto">Des fiches claires, professionnelles et adapt√©es aux exigences de l'inspection.</p>
-        </div>
-        
-        <div className="bg-white border border-edu-light shadow-xl rounded-[2px] overflow-hidden flex flex-col lg:flex-row">
-          <div className="flex-1 p-8 lg:p-12 border-b lg:border-b-0 lg:border-r border-edu-light/30">
-            <div className="space-y-6">
-              <div className="flex items-start gap-4">
-                <CheckCircle2 className="text-edu-red mt-1 flex-shrink-0" size={20} />
-                <div>
-                  <h4 className="font-bold text-edu-black">En-t√™te structur√©</h4>
-                  <p className="text-sm text-edu-dark mt-1">Mati√®re, classe, th√®me, temps imparti et objectifs clairement d√©finis.</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-4">
-                <CheckCircle2 className="text-edu-red mt-1 flex-shrink-0" size={20} />
-                <div>
-                  <h4 className="font-bold text-edu-black">D√©roulement sur-mesure</h4>
-                  <p className="text-sm text-edu-dark mt-1">Sections adapt√©es : analyse de corpus, d√©marches scientifiques ou proc√©dures techniques.</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-4">
-                <CheckCircle2 className="text-edu-red mt-1 flex-shrink-0" size={20} />
-                <div>
-                  <h4 className="font-bold text-edu-black">Support multi-formats</h4>
-                  <p className="text-sm text-edu-dark mt-1">Int√©gration parfaite de textes litt√©raires, formules math√©matiques et donn√©es historiques.</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-4">
-                <CheckCircle2 className="text-edu-red mt-1 flex-shrink-0" size={20} />
-                <div>
-                  <h4 className="font-bold text-edu-black">Document √©l√®ve int√©gr√©</h4>
-                  <p className="text-sm text-edu-dark mt-1">G√©n√©rez automatiquement la version √©l√®ve avec les t√¢ches √† accomplir.</p>
-                </div>
-              </div>
+      <section id="premium" className="py-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid lg:grid-cols-[1.1fr_0.9fr] gap-10 items-start">
+          <div>
+            <div className="inline-flex items-center gap-2 bg-edu-red/10 px-4 py-2 rounded-full mb-5">
+              <Sparkles size={16} className="text-edu-red" />
+              <span className="text-sm font-medium text-edu-red">Pourquoi passer au payant</span>
             </div>
+            <h2 className="font-serif text-4xl text-edu-black mb-4">Une section claire pour comprendre les avantages du premium</h2>
+            <p className="text-edu-dark/70 text-lg max-w-2xl">Le plan Gratuit sert ‡ dÈcouvrir. Le plan Standard augmente immÈdiatement votre capacitÈ. Le plan Premium retire les derniËres limites pour un usage intensif.</p>
           </div>
-          <div className="flex-1 bg-[#F5F2ED] p-8 flex items-center justify-center">
-            {/* Mini Sheet Preview */}
-            <div className="w-full max-w-sm bg-white border border-edu-light shadow-md p-6 text-[8px] font-sans">
-              <div className="border-b-2 border-edu-black pb-2 mb-4 flex justify-between items-end">
-                <div className="font-serif text-lg">La R√©volution Fran√ßaise</div>
-                <div className="text-right font-mono text-edu-dark">Histoire<br/>Classe de 4√®me</div>
-              </div>
-              <div className="mb-4">
-                <div className="font-serif text-edu-red text-xs mb-1 border-b border-edu-light">I. OBJECTIFS</div>
-                <div className="text-edu-dark leading-relaxed">Comprendre les causes de la R√©volution.<br/>Analyser la D√©claration des droits de l'homme.</div>
-              </div>
-              <div>
-                <div className="font-serif text-edu-red text-xs mb-1 border-b border-edu-light">II. D√âROULEMENT</div>
-                <table className="w-full border-collapse mt-2">
-                  <thead>
-                    <tr className="bg-edu-bg/50 border-b border-edu-light">
-                      <th className="text-left p-1">Phase</th>
-                      <th className="text-left p-1">Activit√©s</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr className="border-b border-edu-light/50">
-                      <td className="p-1">Introduction</td>
-                      <td className="p-1 text-edu-red">Analyse de caricature</td>
-                    </tr>
-                    <tr className="border-b border-edu-light/50">
-                      <td className="p-1">D√©veloppement</td>
-                      <td className="p-1 text-edu-red">√âtude de textes</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
+          <div className="rounded-[28px] bg-edu-dark text-white p-8 shadow-xl overflow-hidden relative">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(126,11,11,0.2),_transparent_30%)]" />
+            <div className="relative space-y-4">
+              {premiumBenefits.map((benefit) => (
+                <div key={benefit.title} className="rounded-2xl border border-white/10 bg-white/5 p-5">
+                  <h3 className="font-semibold text-lg mb-2">{benefit.title}</h3>
+                  <p className="text-sm text-white/70 leading-relaxed">{benefit.description}</p>
+                </div>
+              ))}
             </div>
           </div>
         </div>
       </section>
 
-      {/* Pricing Section */}
       <section id="pricing" className="py-24 bg-edu-dark text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="font-serif text-4xl mb-4">Tarifs simples et transparents</h2>
-            <p className="text-edu-light max-w-2xl mx-auto">Investissez dans votre p√©dagogie.</p>
+            <h2 className="font-serif text-4xl mb-4">Tarifs simples et immÈdiatement comprÈhensibles</h2>
+            <p className="text-edu-light max-w-3xl mx-auto">Chaque plan expose clairement sa promesse, ses avantages et sa limite principale pour aider l'utilisateur gratuit ‡ savoir quand passer au niveau supÈrieur.</p>
           </div>
-          
-          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            {/* Free */}
-            <div className="bg-edu-black/40 border border-edu-light/20 p-8 rounded-[2px] flex flex-col">
-              <h3 className="font-serif text-2xl mb-2">Gratuit</h3>
-              <div className="text-3xl font-light mb-6">0 <span className="text-sm text-edu-light">XOF/mois</span></div>
-              <ul className="space-y-3 mb-8 flex-1 text-sm text-edu-light">
-                <li className="flex items-center gap-2"><CheckCircle2 size={16} className="text-edu-red" /> 3 fiches par mois</li>
-                <li className="flex items-center gap-2"><CheckCircle2 size={16} className="text-edu-red" /> Cr√©ation manuelle</li>
-                <li className="flex items-center gap-2"><CheckCircle2 size={16} className="text-edu-red" /> Export PDF standard</li>
-              </ul>
-              <Link to="/signup" className="w-full block text-center border border-edu-light/50 hover:bg-white/5 py-2.5 rounded-[2px] transition-colors">Commencer</Link>
-            </div>
-            
-            {/* Pro */}
-            <div className="bg-white text-edu-black border border-edu-red p-8 rounded-[2px] flex flex-col relative transform md:-translate-y-4 shadow-2xl">
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-edu-red text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">Populaire</div>
-              <h3 className="font-serif text-2xl mb-2">Pro</h3>
-              <div className="text-3xl font-bold mb-6">3 000 <span className="text-sm text-edu-dark font-normal">XOF/mois</span></div>
-              <ul className="space-y-3 mb-8 flex-1 text-sm text-edu-dark">
-                <li className="flex items-center gap-2"><CheckCircle2 size={16} className="text-edu-red" /> Fiches illimit√©es</li>
-                <li className="flex items-center gap-2"><CheckCircle2 size={16} className="text-edu-red" /> G√©n√©ration par IA</li>
-                <li className="flex items-center gap-2"><CheckCircle2 size={16} className="text-edu-red" /> Import de documents</li>
-                <li className="flex items-center gap-2"><CheckCircle2 size={16} className="text-edu-red" /> Export PDF HD sans filigrane</li>
-              </ul>
-              <Link to="/signup" className="w-full block text-center bg-edu-red text-white hover:bg-[#5a0808] py-2.5 rounded-[2px] transition-colors shadow-md">S'abonner</Link>
-            </div>
-            
-            {/* √âtablissement */}
-            <div className="bg-edu-black/40 border border-edu-light/20 p-8 rounded-[2px] flex flex-col">
-              <h3 className="font-serif text-2xl mb-2">√âtablissement</h3>
-              <div className="text-3xl font-light mb-6">Sur devis</div>
-              <ul className="space-y-3 mb-8 flex-1 text-sm text-edu-light">
-                <li className="flex items-center gap-2"><CheckCircle2 size={16} className="text-edu-red" /> Licences multiples</li>
-                <li className="flex items-center gap-2"><CheckCircle2 size={16} className="text-edu-red" /> Biblioth√®que partag√©e</li>
-                <li className="flex items-center gap-2"><CheckCircle2 size={16} className="text-edu-red" /> Mod√®les personnalis√©s</li>
-              </ul>
-              <a href="mailto:contact@eduplan.pro" className="w-full block text-center border border-edu-light/50 hover:bg-white/5 py-2.5 rounded-[2px] transition-colors">Nous contacter</a>
-            </div>
+
+          <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+            {pricingPlans.map((plan) => (
+              <div
+                key={plan.key}
+                className={`rounded-[24px] p-8 flex flex-col border ${plan.highlight ? 'bg-white text-edu-black border-edu-red shadow-2xl md:-translate-y-3' : 'bg-edu-black/40 border-edu-light/20'}`}
+              >
+                {plan.badge && (
+                  <div className={`mb-5 inline-flex w-fit rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.25em] ${plan.highlight ? 'bg-edu-red text-white' : 'bg-white/10 text-white'}`}>
+                    {plan.badge}
+                  </div>
+                )}
+                <h3 className="font-serif text-2xl mb-2">{plan.name}</h3>
+                <div className="text-3xl font-bold mb-2">{plan.priceLabel}<span className={`text-sm font-normal ${plan.highlight ? 'text-edu-dark/60' : 'text-edu-light'}`}>/mois</span></div>
+                <p className={`text-sm mb-6 ${plan.highlight ? 'text-edu-dark/70' : 'text-edu-light'}`}>{plan.description}</p>
+                <div className={`rounded-2xl p-4 mb-6 ${plan.highlight ? 'bg-edu-red/5' : 'bg-white/5'}`}>
+                  <p className={`text-[10px] uppercase tracking-[0.25em] mb-2 ${plan.highlight ? 'text-edu-red' : 'text-white/60'}`}>Limites</p>
+                  <ul className={`space-y-2 text-sm ${plan.highlight ? 'text-edu-dark/70' : 'text-edu-light'}`}>
+                    {plan.limits.map((limit) => (
+                      <li key={limit} className="flex items-start gap-2"><CheckCircle2 size={16} className="mt-0.5 text-edu-red" />{limit}</li>
+                    ))}
+                  </ul>
+                </div>
+                <ul className={`space-y-3 mb-8 flex-1 text-sm ${plan.highlight ? 'text-edu-dark' : 'text-edu-light'}`}>
+                  {plan.features.map((feature) => (
+                    <li key={feature} className="flex items-start gap-2"><CheckCircle2 size={16} className="mt-0.5 text-edu-red" /> {feature}</li>
+                  ))}
+                </ul>
+                <Link to={plan.key === 'free' ? '/signup' : '/pricing'} className={`w-full block text-center py-3 rounded-[14px] transition-colors ${plan.highlight ? 'bg-edu-red text-white hover:bg-[#5a0808]' : 'border border-edu-light/40 hover:bg-white/5'}`}>
+                  {plan.key === 'free' ? 'Commencer' : 'Souscrire'}
+                </Link>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Footer */}
       <Footer />
     </div>
   );

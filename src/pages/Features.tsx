@@ -154,7 +154,7 @@ export default function FonctionnalitésIAPage() {
       </div>
 
       {/* Section Lead */}
-      <div className="bg-gradient-to-r from-edu-black/5 to-edu-red/5 rounded-2xl p-6 md:p-8 mb-12 text-center border border-edu-light/20">
+      <div className="bg-linear-to-r from-edu-black/5 to-edu-red/5 rounded-2xl p-6 md:p-8 mb-12 text-center border border-edu-light/20">
         <p className="text-xl italic text-edu-dark/80 max-w-3xl mx-auto">
           "Notre mission : vous faire gagner du temps sur la préparation pour vous permettre de vous concentrer
           sur ce qui compte vraiment — l'accompagnement humain de vos élèves."
@@ -171,7 +171,7 @@ export default function FonctionnalitésIAPage() {
             transition={{ delay: idx * 0.1 }}
             className="bg-white rounded-2xl border border-edu-light/20 shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden group"
           >
-            <div className={`h-2 bg-gradient-to-r ${feature.color}`} />
+            <div className={`h-2 bg-linear-to-r ${feature.color}`} />
             <div className="p-6">
               <div className="flex items-start justify-between mb-4">
                 <div className="p-3 bg-edu-red/10 rounded-xl">
@@ -196,7 +196,7 @@ export default function FonctionnalitésIAPage() {
               <ul className="space-y-2 mb-6">
                 {feature.details.map((detail, i) => (
                   <li key={i} className="flex items-start gap-2 text-sm text-edu-dark/80">
-                    <CheckCircle2 size={14} className="text-edu-red mt-0.5 flex-shrink-0" />
+                    <CheckCircle2 size={14} className="text-edu-red mt-0.5 shrink-0" />
                     <span>{detail}</span>
                   </li>
                 ))}

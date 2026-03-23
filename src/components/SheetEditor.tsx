@@ -152,9 +152,7 @@ export default function SheetEditor() {
         navigate(`/dashboard/editor/${savedId}`, { replace: true });
       }
     } catch (error) {
-      toast.error('Erreur de sauvegarde', {
-        description: 'Impossible de sauvegarder les modifications.'
-      });
+      toast.error('Erreur de sauvegarde', { description: error instanceof Error ? error.message : 'Impossible de sauvegarder les modifications.' });
     }
   };
 

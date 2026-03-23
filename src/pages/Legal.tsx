@@ -161,7 +161,7 @@ export default function MentionsLégalesPage() {
         transition={{ delay: 0.1 }}
         className="mb-10 bg-white border border-edu-light/20 rounded-2xl overflow-hidden shadow-sm"
       >
-        <div className="border-b border-edu-light/20 bg-gradient-to-r from-edu-light/5 to-transparent px-6 py-4">
+        <div className="border-b border-edu-light/20 bg-linear-to-r from-edu-light/5 to-transparent px-6 py-4">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-edu-red/10 rounded-xl">
               <Building2 size={22} className="text-edu-red" />
@@ -174,35 +174,35 @@ export default function MentionsLégalesPage() {
           <div className="grid md:grid-cols-2 gap-6">
             <div className="space-y-3">
               <div className="flex items-start gap-3">
-                <Building2 size={18} className="text-edu-red mt-0.5 flex-shrink-0" />
+                <Building2 size={18} className="text-edu-red mt-0.5 shrink-0" />
                 <div>
                   <p className="font-semibold text-edu-black">Raison sociale</p>
                   <p className="text-edu-dark/70">{legalInfo.editor.name}</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <Scale size={18} className="text-edu-red mt-0.5 flex-shrink-0" />
+                <Scale size={18} className="text-edu-red mt-0.5 shrink-0" />
                 <div>
                   <p className="font-semibold text-edu-black">Forme juridique</p>
                   <p className="text-edu-dark/70">{legalInfo.editor.legalForm}</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <FileText size={18} className="text-edu-red mt-0.5 flex-shrink-0" />
+                <FileText size={18} className="text-edu-red mt-0.5 shrink-0" />
                 <div>
                   <p className="font-semibold text-edu-black">Capital social</p>
                   <p className="text-edu-dark/70">{legalInfo.editor.capital}</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <Info size={18} className="text-edu-red mt-0.5 flex-shrink-0" />
+                <Info size={18} className="text-edu-red mt-0.5 shrink-0" />
                 <div>
                   <p className="font-semibold text-edu-black">RCS</p>
                   <p className="text-edu-dark/70">{legalInfo.editor.rcs}</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <Info size={18} className="text-edu-red mt-0.5 flex-shrink-0" />
+                <Info size={18} className="text-edu-red mt-0.5 shrink-0" />
                 <div>
                   <p className="font-semibold text-edu-black">SIRET</p>
                   <p className="text-edu-dark/70">{legalInfo.editor.siret}</p>
@@ -212,28 +212,28 @@ export default function MentionsLégalesPage() {
 
             <div className="space-y-3">
               <div className="flex items-start gap-3">
-                <Info size={18} className="text-edu-red mt-0.5 flex-shrink-0" />
+                <Info size={18} className="text-edu-red mt-0.5 shrink-0" />
                 <div>
                   <p className="font-semibold text-edu-black">Code APE</p>
                   <p className="text-edu-dark/70">{legalInfo.editor.ape}</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <Info size={18} className="text-edu-red mt-0.5 flex-shrink-0" />
+                <Info size={18} className="text-edu-red mt-0.5 shrink-0" />
                 <div>
                   <p className="font-semibold text-edu-black">TVA intracommunautaire</p>
                   <p className="text-edu-dark/70">{legalInfo.editor.vat}</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <MapPin size={18} className="text-edu-red mt-0.5 flex-shrink-0" />
+                <MapPin size={18} className="text-edu-red mt-0.5 shrink-0" />
                 <div>
                   <p className="font-semibold text-edu-black">Siège social</p>
                   <p className="text-edu-dark/70">{legalInfo.editor.address}</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <Mail size={18} className="text-edu-red mt-0.5 flex-shrink-0" />
+                <Mail size={18} className="text-edu-red mt-0.5 shrink-0" />
                 <div>
                   <p className="font-semibold text-edu-black">Contact</p>
                   <a href={`mailto:${legalInfo.editor.email}`} className="text-edu-red hover:underline">
@@ -242,7 +242,7 @@ export default function MentionsLégalesPage() {
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <Phone size={18} className="text-edu-red mt-0.5 flex-shrink-0" />
+                <Phone size={18} className="text-edu-red mt-0.5 shrink-0" />
                 <div>
                   <p className="font-semibold text-edu-black">Téléphone</p>
                   <p className="text-edu-dark/70">{legalInfo.editor.phone}</p>
@@ -253,7 +253,7 @@ export default function MentionsLégalesPage() {
 
           <div className="mt-6 pt-4 border-t border-edu-light/20">
             <div className="flex items-start gap-3">
-              <UserCheck size={18} className="text-edu-red mt-0.5 flex-shrink-0" />
+              <UserCheck size={18} className="text-edu-red mt-0.5 shrink-0" />
               <div>
                 <p className="font-semibold text-edu-black">Directrice de la publication</p>
                 <p className="text-edu-dark/70">{legalInfo.editor.director}, {legalInfo.editor.directorTitle}</p>
@@ -271,7 +271,7 @@ export default function MentionsLégalesPage() {
         transition={{ delay: 0.2 }}
         className="mb-10 bg-white border border-edu-light/20 rounded-2xl overflow-hidden shadow-sm"
       >
-        <div className="border-b border-edu-light/20 bg-gradient-to-r from-edu-light/5 to-transparent px-6 py-4">
+        <div className="border-b border-edu-light/20 bg-linear-to-r from-edu-light/5 to-transparent px-6 py-4">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-edu-red/10 rounded-xl">
               <Server size={22} className="text-edu-red" />
@@ -329,7 +329,7 @@ export default function MentionsLégalesPage() {
         transition={{ delay: 0.3 }}
         className="mb-10 bg-white border border-edu-light/20 rounded-2xl overflow-hidden shadow-sm"
       >
-        <div className="border-b border-edu-light/20 bg-gradient-to-r from-edu-light/5 to-transparent px-6 py-4">
+        <div className="border-b border-edu-light/20 bg-linear-to-r from-edu-light/5 to-transparent px-6 py-4">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-edu-red/10 rounded-xl">
               <Shield size={22} className="text-edu-red" />
@@ -386,7 +386,7 @@ export default function MentionsLégalesPage() {
         transition={{ delay: 0.4 }}
         className="mb-10 bg-white border border-edu-light/20 rounded-2xl overflow-hidden shadow-sm"
       >
-        <div className="border-b border-edu-light/20 bg-gradient-to-r from-edu-light/5 to-transparent px-6 py-4">
+        <div className="border-b border-edu-light/20 bg-linear-to-r from-edu-light/5 to-transparent px-6 py-4">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-edu-red/10 rounded-xl">
               <Lock size={22} className="text-edu-red" />
@@ -439,10 +439,10 @@ export default function MentionsLégalesPage() {
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
         transition={{ delay: 0.5 }}
-        className="mb-10 bg-gradient-to-r from-edu-black/5 to-edu-red/5 rounded-2xl p-6 border border-edu-light/20"
+        className="mb-10 bg-linear-to-r from-edu-black/5 to-edu-red/5 rounded-2xl p-6 border border-edu-light/20"
       >
         <div className="flex items-start gap-4">
-          <Heart size={28} className="text-edu-red flex-shrink-0" />
+          <Heart size={28} className="text-edu-red shrink-0" />
           <div>
             <h3 className="font-serif text-xl text-edu-black mb-2">Médiation et résolution des litiges</h3>
             <p className="text-edu-dark/70 text-sm mb-3">

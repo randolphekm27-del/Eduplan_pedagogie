@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { FREE_PLAN_LIMIT } from '../utils/pricingPlans';
 import { Mic, Paperclip, ArrowLeft, Loader2 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
@@ -21,23 +22,23 @@ export default function AIPrompt() {
 
     // Restriction Plan Gratuit
     if (profile?.tier === 'free') {
-      if (profile.lessons_count >= 3) {
+      if (profile.lessons_count >= FREE_PLAN_LIMIT) {
         toast.error("Limite atteinte", {
-          description: "Vous avez atteint la limite de 3 fiches pour le plan Gratuit. Passez au plan Pro pour continuer !",
+          description: "Vous avez atteint la limite de 5 fiches pour le plan Gratuit. Passez au plan Standard ou Premium pour continuer !",
           action: {
-            label: "Voir les tarifs",
+            label: "Voir les offres",
             onClick: () => navigate('/pricing')
           }
         });
         return;
       }
       
-      // Note: In the user request, AI is strictly for PRO.
-      // So even if they have < 3 fiches, AI is restricted.
+      // L'IA est r?serv?e aux offres payantes.
+      // M?me avec des fiches restantes, le plan gratuit ne d?bloque pas l'IA.
       toast.error("Fonctionnalité Premium", {
         description: "La génération par IA est réservée aux abonnés Pro. Passez au niveau supérieur pour en profiter !",
         action: {
-          label: "Devenir Pro",
+          label: "Voir les offres",
           onClick: () => navigate('/pricing')
         }
       });

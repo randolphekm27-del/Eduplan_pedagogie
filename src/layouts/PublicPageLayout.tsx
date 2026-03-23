@@ -15,8 +15,18 @@ export default function PublicPageLayout() {
             <span className="font-serif text-2xl font-bold tracking-wide">EduPlan</span>
           </Link>
           <div className="flex items-center gap-4">
+            <Link to="/pricing" className="hidden md:block text-sm font-medium text-edu-dark hover:text-edu-red transition-colors">
+              Offres Premium
+            </Link>
             <ThemeToggle />
-            <Link to="/dashboard"><Button variant="primary" className="text-sm px-6 py-2.5">AccÃ©der Ã  l'application</Button></Link>
+            <Link to="/pricing">
+              <Button variant="secondary" className="hidden sm:inline-flex text-sm px-6 py-2.5">
+                Voir les offres
+              </Button>
+            </Link>
+            <Link to="/dashboard">
+              <Button variant="primary" className="text-sm px-6 py-2.5">Accéder à l'application</Button>
+            </Link>
           </div>
         </div>
       </header>
