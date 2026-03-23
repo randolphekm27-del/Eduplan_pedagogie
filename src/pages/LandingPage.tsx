@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, Navigate } from 'react-router-dom';
-import { GraduationCap, Bot, Upload, Edit3, CheckCircle2, ChevronRight, ArrowUpRight, Sparkles } from 'lucide-react';
+import { GraduationCap, Bot, Upload, Edit3, CheckCircle2, ChevronRight, Sparkles } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
@@ -26,7 +26,7 @@ export default function LandingPage() {
           </div>
 
           <nav className="hidden md:flex items-center gap-8">
-            <a href="#features" className="text-sm font-medium hover:text-edu-red transition-all duration-200 border-b-2 border-transparent hover:border-edu-red">Fonctionnalit�s</a>
+            <a href="#features" className="text-sm font-medium hover:text-edu-red transition-all duration-200 border-b-2 border-transparent hover:border-edu-red">Fonctionnalités</a>
             <a href="#premium" className="text-sm font-medium hover:text-edu-red transition-all duration-200 border-b-2 border-transparent hover:border-edu-red">Premium</a>
             <a href="#pricing" className="text-sm font-medium hover:text-edu-red transition-all duration-200 border-b-2 border-transparent hover:border-edu-red">Tarifs</a>
             <Link to="/blog" className="text-sm font-medium hover:text-edu-red transition-all duration-200 border-b-2 border-transparent hover:border-edu-red">Blog</Link>
@@ -39,7 +39,7 @@ export default function LandingPage() {
               <Button variant="secondary" className="text-sm px-6 py-2.5">Voir les offres</Button>
             </Link>
             <Link to="/login" className="hidden sm:block">
-              <Button variant="primary" className="text-sm px-6 py-2.5">Acc�der � la plateforme</Button>
+              <Button variant="primary" className="text-sm px-6 py-2.5">Accéder à la plateforme</Button>
             </Link>
           </div>
         </div>
@@ -53,7 +53,7 @@ export default function LandingPage() {
             className="inline-flex items-center gap-2 bg-edu-red/10 px-4 py-2 rounded-full mb-6"
           >
             <Sparkles size={16} className="text-edu-red" />
-            <span className="text-sm font-medium text-edu-red">5 fiches gratuites par mois pour d�marrer</span>
+            <span className="text-sm font-medium text-edu-red">5 fiches gratuites par mois pour démarrer</span>
           </motion.div>
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
@@ -61,7 +61,7 @@ export default function LandingPage() {
             transition={{ duration: 0.6 }}
             className="font-serif text-5xl lg:text-6xl leading-tight text-edu-black mb-6"
           >
-            Cr�ez des fiches p�dagogiques solides, puis passez en premium quand vous voulez aller plus loin
+            Créez des fiches pédagogiques solides, puis passez en premium quand vous voulez aller plus loin
           </motion.h1>
           <motion.p
             initial={{ opacity: 0, y: 20 }}
@@ -69,7 +69,7 @@ export default function LandingPage() {
             transition={{ duration: 0.6, delay: 0.1 }}
             className="text-lg text-edu-dark mb-10 max-w-2xl mx-auto lg:mx-0"
           >
-            EduPlan accompagne les enseignants avec un point d'entr�e gratuit clair, puis deux offres payantes pens�es pour acc�l�rer la pr�paration, d�bloquer l'IA et supprimer les limites qui freinent la production.
+            EduPlan accompagne les enseignants avec un point d'entrée gratuit clair, puis deux offres payantes pensées pour accélérer la préparation, débloquer l'IA et supprimer les limites qui freinent la production.
           </motion.p>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -84,7 +84,7 @@ export default function LandingPage() {
             </Link>
             <Link to="/pricing">
               <Button variant="secondary" className="w-full sm:w-auto px-8 py-3.5">
-                D�couvrir les offres premium
+                Découvrir les offres premium
               </Button>
             </Link>
           </motion.div>
@@ -102,14 +102,14 @@ export default function LandingPage() {
               <div className="flex items-center justify-between border-b border-edu-light/30 pb-4">
                 <div>
                   <p className="text-xs uppercase tracking-[0.3em] text-edu-dark/50">Parcours premium</p>
-                  <h3 className="font-serif text-2xl">Mon�tisation simple</h3>
+                  <h3 className="font-serif text-2xl">Monétisation simple</h3>
                 </div>
                 <span className="rounded-full bg-edu-red px-3 py-1 text-xs font-bold text-white">Conversion</span>
               </div>
               <div className="grid gap-3">
                 <div className="rounded-2xl border border-edu-light/30 bg-[#F5F2ED] p-4">
                   <p className="text-xs uppercase tracking-[0.25em] text-edu-dark/50 mb-2">Gratuit</p>
-                  <p className="font-semibold text-edu-black">5 fiches par mois pour d�couvrir l'outil</p>
+                  <p className="font-semibold text-edu-black">5 fiches par mois pour découvrir l'outil</p>
                 </div>
                 <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
                   <p className="text-xs uppercase tracking-[0.25em] text-amber-700/70 mb-2">Standard</p>
@@ -117,7 +117,7 @@ export default function LandingPage() {
                 </div>
                 <div className="rounded-2xl border border-edu-red/20 bg-edu-dark p-4 text-white">
                   <p className="text-xs uppercase tracking-[0.25em] text-white/60 mb-2">Premium</p>
-                  <p className="font-semibold">Fiches illimit�es et acc�s complet aux fonctionnalit�s avanc�es</p>
+                  <p className="font-semibold">Fiches illimitées et accès complet aux fonctionnalités avancées</p>
                 </div>
               </div>
             </div>
@@ -128,8 +128,8 @@ export default function LandingPage() {
       <section id="features" className="py-24 bg-white border-y border-edu-light/20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="font-serif text-4xl text-edu-black mb-4">Trois fa�ons de cr�er vos fiches</h2>
-            <p className="text-edu-dark max-w-2xl mx-auto">Le mode gratuit vous laisse tester le c�ur du produit. Les plans payants acc�l�rent ensuite tout le flux de production.</p>
+            <h2 className="font-serif text-4xl text-edu-black mb-4">Trois façons de créer vos fiches</h2>
+            <p className="text-edu-dark max-w-2xl mx-auto">Le mode gratuit vous laisse tester le cœur du produit. Les plans payants accélèrent ensuite tout le flux de production.</p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
@@ -137,8 +137,8 @@ export default function LandingPage() {
               <div className="w-16 h-16 bg-white border border-edu-light rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                 <Bot size={32} className="text-edu-red" />
               </div>
-              <h3 className="font-serif text-xl font-bold mb-3">G�n�ration assist�e par IA</h3>
-              <p className="text-edu-dark text-sm leading-relaxed">Activez un vrai gain de temps avec les offres Standard et Premium pour produire une premi�re version structur�e en quelques instants.</p>
+              <h3 className="font-serif text-xl font-bold mb-3">Génération assistée par IA</h3>
+              <p className="text-edu-dark text-sm leading-relaxed">Activez un vrai gain de temps avec les offres Standard et Premium pour produire une première version structurée en quelques instants.</p>
             </Card>
 
             <Card variant="standard" className="group">
@@ -146,15 +146,15 @@ export default function LandingPage() {
                 <Upload size={32} className="text-edu-red" />
               </div>
               <h3 className="font-serif text-xl font-bold mb-3">Import de documents</h3>
-              <p className="text-edu-dark text-sm leading-relaxed">Transformez vos cours, notes et supports existants en fiches plus propres, plus rapides � finaliser et pr�tes � �tre r�utilis�es.</p>
+              <p className="text-edu-dark text-sm leading-relaxed">Transformez vos cours, notes et supports existants en fiches plus propres, plus rapides à finaliser et prêtes à être réutilisées.</p>
             </Card>
 
             <Card variant="standard" className="group">
               <div className="w-16 h-16 bg-white border border-edu-light rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                 <Edit3 size={32} className="text-edu-red" />
               </div>
-              <h3 className="font-serif text-xl font-bold mb-3">Cr�ation manuelle guid�e</h3>
-              <p className="text-edu-dark text-sm leading-relaxed">Commencez gratuitement avec l'�diteur pas � pas, puis montez en gamme d�s que votre volume de fiches augmente.</p>
+              <h3 className="font-serif text-xl font-bold mb-3">Création manuelle guidée</h3>
+              <p className="text-edu-dark text-sm leading-relaxed">Commencez gratuitement avec l'éditeur pas à pas, puis montez en gamme dès que votre volume de fiches augmente.</p>
             </Card>
           </div>
         </div>
@@ -168,7 +168,7 @@ export default function LandingPage() {
               <span className="text-sm font-medium text-edu-red">Pourquoi passer au payant</span>
             </div>
             <h2 className="font-serif text-4xl text-edu-black mb-4">Une section claire pour comprendre les avantages du premium</h2>
-            <p className="text-edu-dark/70 text-lg max-w-2xl">Le plan Gratuit sert � d�couvrir. Le plan Standard augmente imm�diatement votre capacit�. Le plan Premium retire les derni�res limites pour un usage intensif.</p>
+            <p className="text-edu-dark/70 text-lg max-w-2xl">Le plan Gratuit sert à découvrir. Le plan Standard augmente immédiatement votre capacité. Le plan Premium retire les dernières limites pour un usage intensif.</p>
           </div>
           <div className="rounded-[28px] bg-edu-dark text-white p-8 shadow-xl overflow-hidden relative">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(126,11,11,0.2),transparent_30%)]" />
@@ -187,8 +187,8 @@ export default function LandingPage() {
       <section id="pricing" className="py-24 bg-edu-dark text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="font-serif text-4xl mb-4">Tarifs simples et imm�diatement compr�hensibles</h2>
-            <p className="text-edu-light max-w-3xl mx-auto">Chaque plan expose clairement sa promesse, ses avantages et sa limite principale pour aider l'utilisateur gratuit � savoir quand passer au niveau sup�rieur.</p>
+            <h2 className="font-serif text-4xl mb-4">Tarifs simples et immédiatement compréhensibles</h2>
+            <p className="text-edu-light max-w-3xl mx-auto">Chaque plan expose clairement sa promesse, ses avantages et sa limite principale pour aider l'utilisateur gratuit à savoir quand passer au niveau supérieur.</p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">

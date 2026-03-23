@@ -388,7 +388,7 @@ export default function Settings() {
               {activeTab === 'billing' && (
                 <div className="p-10">
                   <h3 className="font-serif text-2xl text-edu-black mb-1">Abonnement & Facturation</h3>
-                  <p className="text-sm text-edu-dark mb-10">Retrouvez votre plan actuel et comparez les offres Standard et Premium ? tout moment.</p>
+                  <p className="text-sm text-edu-dark mb-10">Retrouvez votre plan actuel et comparez les offres Standard et Premium à tout moment.</p>
 
                   <div className="bg-linear-to-br from-edu-black to-gray-900 border border-gray-800 rounded-[8px] p-8 text-white relative overflow-hidden mb-6">
                     <div className="absolute top-0 right-0 p-10 opacity-10"><CreditCard size={120} /></div>
@@ -399,7 +399,7 @@ export default function Settings() {
                       <p className="text-gray-300 text-sm mb-6">{currentPlan.description}</p>
                       <div className="flex flex-wrap gap-4">
                         <Link to="/pricing" className="px-6 py-2.5 bg-white text-edu-black text-xs font-bold uppercase tracking-widest rounded-[2px] hover:bg-edu-red hover:text-white transition-all">Comparer les offres</Link>
-                        <button onClick={() => toast.info('Gestion de compte', { description: 'Ouverture du portail de paiement...' })} className="px-6 py-2.5 bg-white/10 border border-white/20 text-white text-xs font-bold uppercase tracking-widest rounded-[2px] hover:bg-white/20 transition-all">G?rer l'abonnement</button>
+                        <button onClick={() => toast.info('Gestion de compte', { description: 'Ouverture du portail de paiement...' })} className="px-6 py-2.5 bg-white/10 border border-white/20 text-white text-xs font-bold uppercase tracking-widest rounded-[2px] hover:bg-white/20 transition-all">Gérer l'abonnement</button>
                       </div>
                     </div>
                   </div>
@@ -407,7 +407,7 @@ export default function Settings() {
                   <div className="grid md:grid-cols-3 gap-4 mb-10">
                     <div className="border border-edu-light/30 rounded-[8px] p-4 bg-edu-bg/30">
                       <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-edu-red mb-2">Gratuit</p>
-                      <p className="text-sm text-edu-dark/70">5 fiches par mois et acc?s limit? pour d?couvrir la plateforme.</p>
+                      <p className="text-sm text-edu-dark/70">5 fiches par mois et accès limité pour découvrir la plateforme.</p>
                     </div>
                     <div className="border border-amber-200 rounded-[8px] p-4 bg-amber-50">
                       <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-amber-700 mb-2">Standard</p>
@@ -415,7 +415,7 @@ export default function Settings() {
                     </div>
                     <div className="border border-edu-red/20 rounded-[8px] p-4 bg-edu-red/5">
                       <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-edu-red mb-2">Premium</p>
-                      <p className="text-sm text-edu-dark/70">Acc?s ?tendu ou illimit? et toutes les fonctionnalit?s avanc?es.</p>
+                      <p className="text-sm text-edu-dark/70">Accès étendu ou illimité et toutes les fonctionnalités avancées.</p>
                     </div>
                   </div>
 
@@ -434,8 +434,8 @@ export default function Settings() {
                         <tr>
                           <td className="p-4 text-edu-dark">24 Sep 2025</td>
                           <td className="p-4 font-medium text-edu-black">5 000 XOF</td>
-                          <td className="p-4"><span className="px-2 py-1 bg-green-100 text-green-700 text-[10px] font-bold uppercase tracking-wider rounded-full">Pay?</span></td>
-                          <td className="p-4 text-right"><button className="text-edu-red hover:text-edu-black text-xs font-bold uppercase tracking-widest" onClick={() => toast.success('T?l?chargement lanc?')}>PDF</button></td>
+                          <td className="p-4"><span className="px-2 py-1 bg-green-100 text-green-700 text-[10px] font-bold uppercase tracking-wider rounded-full">Payé</span></td>
+                          <td className="p-4 text-right"><button className="text-edu-red hover:text-edu-black text-xs font-bold uppercase tracking-widest" onClick={() => toast.success('Téléchargement lancé')}>PDF</button></td>
                         </tr>
                       </tbody>
                     </table>

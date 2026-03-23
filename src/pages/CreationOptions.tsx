@@ -13,7 +13,7 @@ export default function CreationOptions() {
         </Link>
       </div>
 
-      <motion.h2 
+      <motion.h2
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         className="font-serif text-3xl md:text-4xl text-edu-black mb-12 text-center"
@@ -22,13 +22,12 @@ export default function CreationOptions() {
       </motion.h2>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
-        {/* Option 1: AI */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
           onClick={() => navigate('/dashboard/create/ai')}
-          className="bg-[#F5F2ED] border border-edu-light p-8 rounded-[2px] transition-all duration-300 hover:border-edu-red hover:shadow-[0_10px_30px_rgba(126,11,11,0.1)] hover:scale-[1.02] cursor-pointer group flex flex-col h-full"
+          className="bg-[#F5F2ED] border border-edu-light p-8 rounded-xs transition-all duration-300 hover:border-edu-red hover:shadow-[0_10px_30px_rgba(126,11,11,0.1)] hover:scale-[1.02] cursor-pointer group flex flex-col h-full"
         >
           <div className="mb-6">
             <Bot size={64} className="text-edu-red" strokeWidth={1.2} />
@@ -41,18 +40,17 @@ export default function CreationOptions() {
             <li className="flex items-center gap-2">✓ Rapide (10 secondes)</li>
             <li className="flex items-center gap-2">✓ Idéal pour débuter</li>
           </ul>
-          <button className="w-full py-2.5 border border-edu-dark text-edu-black rounded-[2px] group-hover:bg-edu-red group-hover:text-white group-hover:border-edu-red transition-colors font-medium">
+          <button className="w-full py-2.5 border border-edu-dark text-edu-black rounded-xs group-hover:bg-edu-red group-hover:text-white group-hover:border-edu-red transition-colors font-medium">
             Choisir
           </button>
         </motion.div>
 
-        {/* Option 2: Upload */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
           onClick={() => navigate('/dashboard/create/upload')}
-          className="bg-[#F5F2ED] border border-edu-light p-8 rounded-[2px] transition-all duration-300 hover:border-edu-red hover:shadow-[0_10px_30px_rgba(126,11,11,0.1)] hover:scale-[1.02] cursor-pointer group flex flex-col h-full"
+          className="bg-[#F5F2ED] border border-edu-light p-8 rounded-xs transition-all duration-300 hover:border-edu-red hover:shadow-[0_10px_30px_rgba(126,11,11,0.1)] hover:scale-[1.02] cursor-pointer group flex flex-col h-full"
         >
           <div className="mb-6">
             <Upload size={64} className="text-edu-red" strokeWidth={1.2} />
@@ -65,18 +63,17 @@ export default function CreationOptions() {
             <li className="flex items-center gap-2">✓ Valorise vos documents</li>
             <li className="flex items-center gap-2">✓ Gain de temps</li>
           </ul>
-          <button className="w-full py-2.5 border border-edu-dark text-edu-black rounded-[2px] group-hover:bg-edu-red group-hover:text-white group-hover:border-edu-red transition-colors font-medium">
+          <button className="w-full py-2.5 border border-edu-dark text-edu-black rounded-xs group-hover:bg-edu-red group-hover:text-white group-hover:border-edu-red transition-colors font-medium">
             Choisir
           </button>
         </motion.div>
 
-        {/* Option 3: Manual */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
           onClick={() => navigate('/dashboard/create/manual')}
-          className="bg-[#F5F2ED] border border-edu-light p-8 rounded-[2px] transition-all duration-300 hover:border-edu-red hover:shadow-[0_10px_30px_rgba(126,11,11,0.1)] hover:scale-[1.02] cursor-pointer group flex flex-col h-full"
+          className="bg-[#F5F2ED] border border-edu-light p-8 rounded-xs transition-all duration-300 hover:border-edu-red hover:shadow-[0_10px_30px_rgba(126,11,11,0.1)] hover:scale-[1.02] cursor-pointer group flex flex-col h-full"
         >
           <div className="mb-6">
             <Edit3 size={64} className="text-edu-red" strokeWidth={1.2} />
@@ -89,21 +86,20 @@ export default function CreationOptions() {
             <li className="flex items-center gap-2">✓ Contrôle total</li>
             <li className="flex items-center gap-2">✓ Personnalisation avancée</li>
           </ul>
-          <button className="w-full py-2.5 border border-edu-dark text-edu-black rounded-[2px] group-hover:bg-edu-red group-hover:text-white group-hover:border-edu-red transition-colors font-medium">
+          <button className="w-full py-2.5 border border-edu-dark text-edu-black rounded-xs group-hover:bg-edu-red group-hover:text-white group-hover:border-edu-red transition-colors font-medium">
             Choisir
           </button>
         </motion.div>
 
-        {/* Option 4: Blank Page */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
           onClick={() => navigate('/dashboard/editor/blank')}
-          className="bg-[#F5F2ED] border border-edu-light p-8 rounded-[2px] transition-all duration-300 hover:border-edu-red hover:shadow-[0_10px_30px_rgba(126,11,11,0.1)] hover:scale-[1.02] cursor-pointer group flex flex-col h-full"
+          className="bg-[#F5F2ED] border border-edu-light p-8 rounded-xs transition-all duration-300 hover:border-edu-red hover:shadow-[0_10px_30px_rgba(126,11,11,0.1)] hover:scale-[1.02] cursor-pointer group flex flex-col h-full"
         >
           <div className="mb-6">
-            <div className="w-16 h-16 border-2 border-edu-red border-dashed rounded-[4px] flex items-center justify-center">
+            <div className="w-16 h-16 border-2 border-edu-red border-dashed rounded-sm flex items-center justify-center">
               <Plus size={32} className="text-edu-red" />
             </div>
           </div>
@@ -115,7 +111,7 @@ export default function CreationOptions() {
             <li className="flex items-center gap-2">✓ Page blanche</li>
             <li className="flex items-center gap-2">✓ Flexibilité absolue</li>
           </ul>
-          <button className="w-full py-2.5 border border-edu-dark text-edu-black rounded-[2px] group-hover:bg-edu-red group-hover:text-white group-hover:border-edu-red transition-colors font-medium">
+          <button className="w-full py-2.5 border border-edu-dark text-edu-black rounded-xs group-hover:bg-edu-red group-hover:text-white group-hover:border-edu-red transition-colors font-medium">
             Créer
           </button>
         </motion.div>
