@@ -1,4 +1,4 @@
-﻿import { supabase } from './supabaseClient';
+import { supabase } from './supabaseClient';
 import { FicheData } from '../utils/documentTemplate';
 
 const QUERY_TIMEOUT_MS = 10000;
@@ -23,22 +23,22 @@ function buildDefaultFicheData(sheet: any): FicheData {
   return {
     id: sheet.id,
     titre: sheet.title || '',
-    numeroFiche: '',
+    numeroFiche: sheet.sheet_number || '',
     enTete: {
-      matiere: sheet.subject || '',
-      theme: '',
-      objectifGeneral: '',
-      classe: sheet.class_level || '',
-      temps: sheet.duration || '',
-      date: ''
+      matiere: sheet.matiere || '',
+      theme: sheet.theme || '',
+      objectifGeneral: sheet.objectif_general || '',
+      classe: sheet.classe || '',
+      temps: sheet.temps || '',
+      date: sheet.date || ''
     },
     miseEnSituation: {
-      rappel: '',
-      prerequis: '',
-      motivation: ''
+      rappel: sheet.rappel || '',
+      prerequis: sheet.prerequis || '',
+      motivation: sheet.motivation || ''
     },
     sequences: [],
-    syntheseLecon: '',
+    syntheseLecon: sheet.synthese_collective || '',
     evaluationFormative: '',
     documentEleve: {
       activite: '',
@@ -103,68 +103,101 @@ export const storageService = {
     return (data || []).map((row: any) => ({
       id: row.id,
       title: row.title,
-      subject: row.subject || row.content?.enTete?.matiere || '',
-      class: row.class_level || row.content?.enTete?.classe || '',
+      subject: row.matiere || '',
+      class: row.classe || '',
       date: new Date(row.updated_at).toLocaleDateString('fr-FR'),
       tags: row.tags || [],
-      theme: row.content?.enTete?.theme || row.description || '',
-      folderId: undefined,
-      isFavorite: false,
-      content: row.content || undefined
+      theme: row.theme || '',
+      folderId: row.folder_id || undefined,
+      isFavorite: row.is_favorite || false
     }));
   },
 
   getFicheById: async (id: string): Promise<FicheData | null> => {
-    const { data: sheet, error } = await supabase
+    // 1. Fetch main sheet data
+    const { data: sheet, error: sheetError } = await supabase
       .from('pedagogical_sheets')
       .select('*')
       .eq('id', id)
       .single();
 
-    if (error || !sheet) {
-      console.error('Error fetching fiche by id:', error);
+    if (sheetError || !sheet) {
+      console.error('Error fetching fiche by id:', sheetError);
       return null;
     }
 
-    const fromContent = sheet.content as Partial<FicheData> | null;
-    if (fromContent && typeof fromContent === 'object') {
-      const fallback = buildDefaultFicheData(sheet);
-      return {
-        ...fallback,
-        ...fromContent,
-        id: sheet.id,
-        titre: fromContent.titre || sheet.title || fallback.titre,
-        numeroFiche: fromContent.numeroFiche || '',
-        enTete: {
-          ...fallback.enTete,
-          ...(fromContent.enTete || {}),
-          matiere: fromContent.enTete?.matiere || sheet.subject || fallback.enTete.matiere,
-          classe: fromContent.enTete?.classe || sheet.class_level || fallback.enTete.classe,
-          temps: fromContent.enTete?.temps || sheet.duration || fallback.enTete.temps
-        },
-        miseEnSituation: {
-          ...fallback.miseEnSituation,
-          ...(fromContent.miseEnSituation || {})
-        },
-        sequences: fromContent.sequences || [],
-        documentEleve: {
-          ...fallback.documentEleve,
-          ...(fromContent.documentEleve || {}),
-          strategie: {
-            ...fallback.documentEleve.strategie,
-            ...(fromContent.documentEleve?.strategie || {})
-          }
-        },
-        ficheSynthese: {
-          ...fallback.ficheSynthese,
-          ...(fromContent.ficheSynthese || {})
-        },
-        extraPages: fromContent.extraPages || [],
-        pageOrientations: fromContent.pageOrientations || {}
-      };
-    }
+    // 2. Fetch all related data in parallel
+    const [
+      { data: sequences },
+      { data: studentDoc },
+      { data: synthesis },
+      { data: evaluation },
+      { data: extraPages }
+    ] = await Promise.all([
+      supabase.from('sheet_sequences').select('*').eq('sheet_id', id).order('order_index'),
+      supabase.from('student_documents').select('*').eq('sheet_id', id).single(),
+      supabase.from('sheet_syntheses').select('*').eq('sheet_id', id).single(),
+      supabase.from('sheet_evaluations').select('*').eq('sheet_id', id).single(),
+      supabase.from('extra_pages').select('*').eq('sheet_id', id).order('order_index')
+    ]);
 
-    return buildDefaultFicheData(sheet);
+    // 3. Reconstruct FicheData
+    const fallback = buildDefaultFicheData(sheet);
+    
+    return {
+      ...fallback,
+      id: sheet.id,
+      titre: sheet.title,
+      numeroFiche: sheet.sheet_number || '',
+      enTete: {
+        matiere: sheet.matiere || '',
+        theme: sheet.theme || '',
+        objectifGeneral: sheet.objectif_general || '',
+        classe: sheet.classe || '',
+        temps: sheet.temps || '',
+        date: sheet.date || ''
+      },
+      miseEnSituation: {
+        rappel: sheet.rappel || '',
+        prerequis: sheet.prerequis || '',
+        motivation: sheet.motivation || ''
+      },
+      syntheseLecon: sheet.synthese_collective || '',
+      sequences: (sequences || []).map(s => ({
+        id: s.id,
+        numero: s.sq || '',
+        objectif: s.objectif_operationnel || '',
+        taches: s.tache_eleve || '',
+        organisations: s.organisation || '',
+        savoirs: s.savoir_associe || '',
+        materiel: s.materiel_didactique || '',
+        duree: s.duree || '',
+        observations: s.observation || ''
+      })),
+      documentEleve: studentDoc ? {
+        activite: studentDoc.activite || '',
+        objectifGeneral: studentDoc.objectif || '',
+        consigne: studentDoc.consigne || '',
+        texte: studentDoc.texte || '',
+        support: studentDoc.support || '',
+        taches: studentDoc.taches || '',
+        strategie: {
+          travailGroupe: studentDoc.travail_groupe || '',
+          pleniere: studentDoc.pleniere || ''
+        }
+      } : fallback.documentEleve,
+      ficheSynthese: synthesis ? {
+        point1: synthesis.point1 || '',
+        point2: synthesis.point2 || '',
+        point3: synthesis.point3 || ''
+      } : fallback.ficheSynthese,
+      evaluationFormative: evaluation?.content || '',
+      extraPages: (extraPages || []).map(p => ({
+        id: p.id,
+        title: p.title || '',
+        content: p.content || ''
+      }))
+    };
   },
 
   saveFiche: async (data: FicheData, folderId?: string) => {
@@ -173,19 +206,28 @@ export const storageService = {
     if (!user) throw new Error('User not logged in');
 
     const sheetPayload = {
-      title: data.titre,
       user_id: user.id,
-      description: data.enTete.theme || null,
-      subject: data.enTete.matiere || 'Sans matière',
-      class_level: data.enTete.classe || null,
-      duration: data.enTete.temps || null,
-      content: data,
+      folder_id: (data as any).folder_id || folderId || null,
+      title: data.titre,
+      sheet_number: data.numeroFiche || null,
+      matiere: data.enTete.matiere || null,
+      classe: data.enTete.classe || null,
+      theme: data.enTete.theme || null,
+      temps: data.enTete.temps || null,
+      date: data.enTete.date || null,
+      objectif_general: data.enTete.objectifGeneral || null,
+      rappel: data.miseEnSituation.rappel || null,
+      prerequis: data.miseEnSituation.prerequis || null,
+      motivation: data.miseEnSituation.motivation || null,
+      synthese_collective: data.syntheseLecon || null,
       tags: [],
       updated_at: new Date().toISOString()
     };
 
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     const isNew = !data.id || !uuidRegex.test(data.id);
+
+    let sheetId = data.id;
 
     if (isNew) {
       const { data: newSheet, error: createError } = await supabase
@@ -198,22 +240,92 @@ export const storageService = {
         console.error('Error creating fiche:', createError);
         throw createError;
       }
+      sheetId = newSheet.id;
+    } else {
+      const { error: updateError } = await supabase
+        .from('pedagogical_sheets')
+        .update(sheetPayload)
+        .eq('id', data.id)
+        .eq('user_id', user.id);
 
-      return newSheet.id;
+      if (updateError) {
+        console.error('Error updating fiche:', updateError);
+        throw updateError;
+      }
+
+      // Cleanup child tables for a clean update
+      await Promise.all([
+        supabase.from('sheet_sequences').delete().eq('sheet_id', sheetId),
+        supabase.from('student_documents').delete().eq('sheet_id', sheetId),
+        supabase.from('sheet_syntheses').delete().eq('sheet_id', sheetId),
+        supabase.from('sheet_evaluations').delete().eq('sheet_id', sheetId),
+        supabase.from('extra_pages').delete().eq('sheet_id', sheetId)
+      ]);
     }
 
-    const { error: updateError } = await supabase
-      .from('pedagogical_sheets')
-      .update(sheetPayload)
-      .eq('id', data.id)
-      .eq('user_id', user.id);
+    // Save sub-components
+    const subPromises = [];
 
-    if (updateError) {
-      console.error('Error updating fiche:', updateError);
-      throw updateError;
+    if (data.sequences && data.sequences.length > 0) {
+      subPromises.push(supabase.from('sheet_sequences').insert(
+        data.sequences.map((s, index) => ({
+          sheet_id: sheetId,
+          sq: s.numero,
+          objectif_operationnel: s.objectif,
+          tache_eleve: s.taches,
+          organisation: s.organisations,
+          savoir_associe: s.savoirs,
+          materiel_didactique: s.materiel,
+          duree: s.duree,
+          observation: s.observations,
+          order_index: index
+        }))
+      ));
     }
 
-    return data.id;
+    if (data.documentEleve) {
+      subPromises.push(supabase.from('student_documents').insert({
+        sheet_id: sheetId,
+        activite: data.documentEleve.activite,
+        objectif: data.documentEleve.objectifGeneral,
+        consigne: data.documentEleve.consigne,
+        texte: data.documentEleve.texte,
+        support: data.documentEleve.support,
+        taches: data.documentEleve.taches,
+        travail_groupe: data.documentEleve.strategie.travailGroupe,
+        pleniere: data.documentEleve.strategie.pleniere
+      }));
+    }
+
+    if (data.ficheSynthese) {
+      subPromises.push(supabase.from('sheet_syntheses').insert({
+        sheet_id: sheetId,
+        point1: data.ficheSynthese.point1,
+        point2: data.ficheSynthese.point2,
+        point3: data.ficheSynthese.point3
+      }));
+    }
+
+    if (data.evaluationFormative) {
+      subPromises.push(supabase.from('sheet_evaluations').insert({
+        sheet_id: sheetId,
+        content: data.evaluationFormative
+      }));
+    }
+
+    if (data.extraPages && data.extraPages.length > 0) {
+      subPromises.push(supabase.from('extra_pages').insert(
+        data.extraPages.map((p, index) => ({
+          sheet_id: sheetId,
+          title: p.title,
+          content: p.content,
+          order_index: index
+        }))
+      ));
+    }
+
+    await Promise.all(subPromises);
+    return sheetId;
   },
 
   deleteFiche: async (id: string) => {
@@ -254,11 +366,27 @@ export const storageService = {
     await supabase.from('folders').delete().eq('id', id);
   },
 
-  moveFicheToFolder: async () => {
-    console.warn('moveFicheToFolder: folders are not wired to pedagogical_sheets in the current schema.');
+  moveFicheToFolder: async (ficheId: string, folderId: string | null) => {
+    const { error } = await supabase
+      .from('pedagogical_sheets')
+      .update({ folder_id: folderId })
+      .eq('id', ficheId);
+    
+    if (error) {
+      console.error('Error moving fiche to folder:', error);
+      throw error;
+    }
   },
 
-  toggleFavorite: async () => {
-    console.warn('toggleFavorite: favorites are not wired in the current schema.');
+  toggleFavorite: async (ficheId: string, isFavorite: boolean) => {
+    const { error } = await supabase
+      .from('pedagogical_sheets')
+      .update({ is_favorite: isFavorite })
+      .eq('id', ficheId);
+    
+    if (error) {
+      console.error('Error toggling favorite:', error);
+      throw error;
+    }
   }
 };

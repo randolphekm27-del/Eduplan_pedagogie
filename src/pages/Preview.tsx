@@ -146,7 +146,7 @@ export default function Preview() {
           <button onClick={() => navigate(-1)} className="p-2 hover:bg-edu-light/20 rounded-full">
             <ChevronLeft size={20} />
           </button>
-          <div className="h-6 w-[1px] bg-edu-light/50"></div>
+          <div className="h-6 w-px bg-edu-light/50"></div>
           <div>
             <h1 className="font-serif font-bold text-edu-black">{ficheData.titre}</h1>
             <p className="text-[10px] text-edu-red font-bold uppercase tracking-widest">Aperçu interactif</p>

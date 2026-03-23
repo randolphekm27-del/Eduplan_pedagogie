@@ -138,7 +138,7 @@ export default function RichTextEditor({
           {['8pt', '10pt', '12pt', '14pt', '16pt', '18pt', '24pt'].map(s => <option key={s} value={s}>{s}</option>)}
         </select>
 
-        <div className="w-[1px] h-4 bg-edu-light/30 mx-0.5" />
+        <div className="w-px h-4 bg-edu-light/30 mx-0.5" />
 
         <button onClick={() => editor.chain().focus().toggleBold().run()} className={`p-1 rounded ${editor.isActive('bold') ? 'bg-black text-white' : ''}`}>
           <Bold size={12} />
@@ -150,12 +150,12 @@ export default function RichTextEditor({
           <UnderlineIcon size={12} />
         </button>
 
-        <div className="w-[1px] h-4 bg-edu-light/30 mx-0.5" />
+        <div className="w-px h-4 bg-edu-light/30 mx-0.5" />
 
         <button onClick={() => editor.chain().focus().setTextAlign('left').run()} className="p-1"><AlignLeft size={12} /></button>
         <button onClick={() => editor.chain().focus().setTextAlign('center').run()} className="p-1"><AlignCenter size={12} /></button>
 
-        <div className="w-[1px] h-4 bg-edu-light/30 mx-0.5" />
+        <div className="w-px h-4 bg-edu-light/30 mx-0.5" />
 
         <button onClick={() => {
           const color = window.prompt('Couleur (ex: red, #ff0000):');
@@ -166,7 +166,7 @@ export default function RichTextEditor({
           <div className="w-3 h-3 border border-gray-400 bg-yellow-100" />
         </button>
 
-        <div className="w-[1px] h-4 bg-edu-light/30 mx-0.5" />
+        <div className="w-px h-4 bg-edu-light/30 mx-0.5" />
 
         <button onClick={() => {
           const url = window.prompt('URL:');
@@ -183,12 +183,12 @@ export default function RichTextEditor({
           <button onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()} className={`px-1 text-[10px] font-bold ${editor.isActive('heading', { level: 3 }) ? 'bg-black text-white' : ''}`}>H3</button>
         </div>
 
-        <div className="w-[1px] h-4 bg-edu-light/30 mx-0.5" />
+        <div className="w-px h-4 bg-edu-light/30 mx-0.5" />
 
         <button onClick={() => editor.chain().focus().toggleBulletList().run()} className={`p-1 ${editor.isActive('bulletList') ? 'bg-black text-white rounded' : ''}`}><List size={12} /></button>
         <button onClick={() => editor.chain().focus().toggleOrderedList().run()} className={`p-1 ${editor.isActive('orderedList') ? 'bg-black text-white rounded' : ''}`}><ListOrdered size={12} /></button>
 
-        <div className="w-[1px] h-4 bg-edu-light/30 mx-0.5" />
+        <div className="w-px h-4 bg-edu-light/30 mx-0.5" />
 
         {!editor.isActive('table') ? (
           <button onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()} className="p-1">

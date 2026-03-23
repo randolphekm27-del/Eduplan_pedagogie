@@ -323,7 +323,7 @@ export default function SheetEditor() {
           >
             <ChevronDown className="rotate-90" size={20} />
           </button>
-          <div className="h-8 w-[1px] bg-edu-light/50"></div>
+          <div className="h-8 w-px bg-edu-light/50"></div>
           <div className="flex flex-col">
             <div className="flex items-center gap-3">
               <input
@@ -365,7 +365,7 @@ export default function SheetEditor() {
             </button>
           </div>
 
-          <div className="h-8 w-[1px] bg-edu-light/50 mx-2"></div>
+          <div className="h-8 w-px bg-edu-light/50 mx-2"></div>
 
           <button
             onClick={handleSave}
@@ -384,7 +384,7 @@ export default function SheetEditor() {
           <div className="p-8">
             <div className="flex items-center justify-between mb-8">
               <h3 className="text-[10px] font-bold text-edu-dark tracking-[0.2em] uppercase">Navigation</h3>
-              <div className="w-8 h-[1px] bg-edu-red"></div>
+              <div className="w-8 h-px bg-edu-red"></div>
             </div>
 
             <nav className="space-y-1">
@@ -463,7 +463,7 @@ export default function SheetEditor() {
                       onClick={() => setActiveSection('en-tete')}
                     >
                   <div className="absolute -left-12 top-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <div className="bg-edu-black text-white text-[10px] font-bold px-2 py-1 rotate-[-90deg] origin-right">EN-TÊTE</div>
+                    <div className="bg-edu-black text-white text-[10px] font-bold px-2 py-1 -rotate-90 origin-right">EN-TÊTE</div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-8 mb-8 border-b-2 border-edu-black pb-8">
@@ -541,7 +541,7 @@ export default function SheetEditor() {
                   onClick={() => setActiveSection('situation')}
                 >
                   <div className="absolute -left-12 top-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <div className="bg-edu-black text-white text-[10px] font-bold px-2 py-1 rotate-[-90deg] origin-right">SITUATION</div>
+                    <div className="bg-edu-black text-white text-[10px] font-bold px-2 py-1 -rotate-90 origin-right">SITUATION</div>
                   </div>
 
                   <h3 className="text-xs font-bold text-edu-black uppercase tracking-[0.2em] mb-8 flex items-center gap-4">
@@ -590,7 +590,7 @@ export default function SheetEditor() {
                   onClick={() => setActiveSection('sequences')}
                 >
                   <div className="absolute -left-12 top-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <div className="bg-edu-black text-white text-[10px] font-bold px-2 py-1 rotate-[-90deg] origin-right">SÉQUENCES</div>
+                    <div className="bg-edu-black text-white text-[10px] font-bold px-2 py-1 -rotate-90 origin-right">SÉQUENCES</div>
                   </div>
 
                   <div className="flex items-center justify-between mb-8">
@@ -784,7 +784,7 @@ export default function SheetEditor() {
                 </div>
 
                 {/* PAGE 3 : FICHE DE SYNTHÈSE */}
-                <div id="page3" className={`relative group p-8 border-t-8 border-edu-red pt-16 transition-all ${activeSection === 'page3' ? 'bg-edu-red/[0.02]' : ''
+                <div id="page3" className={`relative group p-8 border-t-8 border-edu-red pt-16 transition-all ${activeSection === 'page3' ? 'bg-edu-red/2' : ''
                   }`} onClick={() => setActiveSection('page3')}>
                   <h2 className="text-xl font-bold text-center underline text-edu-red mb-12">PAGE 3 : FICHE DE SYNTHÈSE</h2>
 

@@ -157,7 +157,7 @@ export default function Library() {
             <div 
               key={folder.id} 
               onClick={() => setActiveFolderId(folder.id)}
-              className={`flex-shrink-0 flex items-center gap-3 border px-4 py-3 rounded-[2px] cursor-pointer transition-all group min-w-[200px] ${
+              className={`shrink-0 flex items-center gap-3 border px-4 py-3 rounded-[2px] cursor-pointer transition-all group min-w-[200px] ${
                 activeFolderId === folder.id 
                   ? 'bg-edu-red/5 border-edu-red shadow-sm' 
                   : 'bg-white border-edu-light/50 hover:border-edu-red/50 hover:shadow-sm'
@@ -175,7 +175,7 @@ export default function Library() {
           ))}
           <button 
             onClick={() => setIsNewFolderModalOpen(true)} 
-            className="flex-shrink-0 flex items-center gap-2 bg-transparent border border-dashed border-edu-dark/30 px-4 py-3 rounded-[2px] cursor-pointer hover:border-edu-black hover:text-edu-black text-edu-dark transition-all text-sm font-medium"
+            className="shrink-0 flex items-center gap-2 bg-transparent border border-dashed border-edu-dark/30 px-4 py-3 rounded-[2px] cursor-pointer hover:border-edu-black hover:text-edu-black text-edu-dark transition-all text-sm font-medium"
           >
             <FolderPlus size={18} /> Nouveau dossier
           </button>

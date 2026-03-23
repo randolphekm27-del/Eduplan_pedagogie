@@ -153,7 +153,7 @@ export default function AIPrompt() {
 
         {/* Main Text Area */}
         <div className="relative mb-6 group">
-          <div className="absolute -inset-0.5 bg-gradient-to-r from-edu-red/0 via-edu-red/20 to-edu-red/0 rounded-[4px] blur opacity-0 group-focus-within:opacity-100 transition duration-500"></div>
+          <div className="absolute -inset-0.5 bg-linear-to-r from-edu-red/0 via-edu-red/20 to-edu-red/0 rounded-[4px] blur opacity-0 group-focus-within:opacity-100 transition duration-500"></div>
           <div className="relative bg-[#F5F2ED] border border-edu-light/50 rounded-[4px] overflow-hidden flex flex-col shadow-inner">
             <textarea
               value={prompt}

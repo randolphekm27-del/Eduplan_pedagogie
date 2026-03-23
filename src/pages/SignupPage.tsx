@@ -174,7 +174,7 @@ export default function SignupPage() {
                     <button
                         type="submit"
                         disabled={isLoading}
-                        className="w-full py-3 bg-edu-red text-white font-semibold rounded-md hover:bg-edu-black transition-colors disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-4 shadow-md active:scale-95 transition-all"
+                        className="w-full py-3 bg-edu-red text-white font-semibold rounded-md hover:bg-edu-black disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-4 shadow-md active:scale-95 transition-all"
                     >
                         {isLoading ? (
                             <>

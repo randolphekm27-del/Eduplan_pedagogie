@@ -121,7 +121,7 @@ export default function Settings() {
     <div className="max-w-6xl mx-auto pb-20">
       <header className="mb-12">
         <div className="flex items-center gap-3 mb-2">
-          <div className="w-8 h-[1px] bg-edu-red"></div>
+          <div className="w-8 h-px bg-edu-red"></div>
           <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-edu-red">Configuration</span>
         </div>
         <h1 className="font-serif text-5xl text-edu-black mb-3">{t('settings.title')}</h1>
@@ -161,7 +161,7 @@ export default function Settings() {
               transition={{ duration: 0.3 }}
               className="bg-white border border-edu-light/30 rounded-[4px] shadow-xl overflow-hidden relative"
             >
-              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-edu-red to-edu-black"></div>
+              <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-edu-red to-edu-black"></div>
 
               {/* Profile Section */}
               {activeTab === 'profile' && (
@@ -390,7 +390,7 @@ export default function Settings() {
                   <h3 className="font-serif text-2xl text-edu-black mb-1">Abonnement & Facturation</h3>
                   <p className="text-sm text-edu-dark mb-10">Retrouvez votre plan actuel et comparez les offres Standard et Premium ? tout moment.</p>
 
-                  <div className="bg-gradient-to-br from-edu-black to-gray-900 border border-gray-800 rounded-[8px] p-8 text-white relative overflow-hidden mb-6">
+                  <div className="bg-linear-to-br from-edu-black to-gray-900 border border-gray-800 rounded-[8px] p-8 text-white relative overflow-hidden mb-6">
                     <div className="absolute top-0 right-0 p-10 opacity-10"><CreditCard size={120} /></div>
                     <div className="relative z-10">
                       <div className="inline-block px-3 py-1 bg-white/10 text-white text-[10px] font-bold uppercase tracking-widest rounded-full mb-4 border border-white/20">Plan actuel</div>
@@ -468,7 +468,7 @@ export default function Settings() {
       {/* Modals */}
       <AnimatePresence>
         {showPasswordModal && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center px-4 bg-edu-black/60 backdrop-blur-sm">
+          <div className="fixed inset-0 z-100 flex items-center justify-center px-4 bg-edu-black/60 backdrop-blur-sm">
             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="bg-white rounded-[4px] shadow-2xl p-8 max-w-md w-full border border-edu-light/30">
               <h3 className="font-serif text-2xl text-edu-black mb-2">Réinitialiser le mot de passe</h3>
               <p className="text-sm text-edu-dark mb-6">Un lien de réinitialisation sera envoyé à <strong>{user?.email}</strong>. Voulez-vous continuer ?</p>
@@ -481,7 +481,7 @@ export default function Settings() {
         )}
 
         {showDeleteModal && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center px-4 bg-edu-black/60 backdrop-blur-sm">
+          <div className="fixed inset-0 z-100 flex items-center justify-center px-4 bg-edu-black/60 backdrop-blur-sm">
             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="bg-white rounded-[4px] shadow-2xl p-8 max-w-md w-full border border-red-200">
               <h3 className="font-serif text-2xl text-red-600 mb-2">Supprimer le compte</h3>
               <p className="text-sm text-edu-dark mb-6">Cette action est <strong>irréversible</strong>. Toutes vos données seront définitivement effacées. Êtes-vous absolument sûr de vouloir supprimer votre compte ?</p>
