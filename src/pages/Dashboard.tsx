@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Plus, Clock, Tag, MoreVertical, FileText, Sparkles, ChevronRight, Crown, Layers3 } from 'lucide-react';
+import { Search, Plus, Clock, Tag, MoreVertical, FileText, Sparkles, ChevronRight, Crown, Layers3, Activity, Zap } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'sonner';
 import { storageService, Fiche } from '../services/storageService';
 import { useAuth } from '../context/AuthContext';
@@ -56,13 +56,24 @@ export default function Dashboard() {
   const lessonsCount = profile?.lessons_count || 0;
   const freeProgress = Math.min((lessonsCount / FREE_PLAN_LIMIT) * 100, 100);
 
+  // Simple animations
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { staggerChildren: 0.05 } }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 10 },
+    visible: { opacity: 1, y: 0 }
+  };
+
   if (isLoading) {
     return (
       <div className="max-w-6xl mx-auto pb-12">
         <div className="flex justify-center items-center min-h-[400px]">
           <div className="text-center">
             <div className="w-12 h-12 border-2 border-edu-red border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-edu-dark">Chargement de votre tableau de bord...</p>
+            <p className="text-edu-dark italic">Chargement du tableau de bord...</p>
           </div>
         </div>
       </div>
@@ -70,186 +81,219 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto pb-12">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-10">
+    <motion.div 
+      initial="hidden"
+      animate="visible"
+      variants={containerVariants}
+      className="max-w-6xl mx-auto pb-16"
+    >
+      {/* Search & Actions Header */}
+      <motion.div variants={itemVariants} className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12">
         <div>
           <h2 className="font-serif text-3xl text-edu-black">Tableau de bord</h2>
-          <p className="text-sm text-edu-dark/60 mt-1">Un accès premium visible pour convertir au bon moment.</p>
+          <p className="text-sm text-edu-dark/60 mt-1 italic">Bienvenue sur votre espace de création{profile?.firstname ? `, ${profile.firstname}` : ''}.</p>
         </div>
 
-        <div className="flex flex-col sm:flex-row w-full md:w-auto gap-4">
-          <div className="relative group flex-1 md:w-80">
+        <div className="flex flex-col sm:flex-row w-full md:w-auto gap-3 items-center">
+          <div className="relative group w-full sm:w-72">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Search size={18} className="text-edu-dark group-focus-within:text-edu-red transition-colors" />
+              <Search size={18} className="text-edu-dark/40 group-focus-within:text-edu-red transition-colors" />
             </div>
             <input
               type="text"
-              placeholder="Rechercher une fiche, un thème..."
+              placeholder="Chercher une fiche..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 bg-white border border-edu-light/50 rounded-[2px] outline-none focus:border-edu-red focus:ring-1 focus:ring-edu-red transition-all shadow-sm"
+              className="w-full pl-10 pr-4 py-2 bg-white border border-edu-light/50 rounded-[2px] outline-none focus:border-edu-red transition-all shadow-sm text-sm"
             />
           </div>
+          
           <Link
             to="/pricing"
-            className="flex items-center justify-center gap-2 border border-edu-red text-edu-red px-5 py-2.5 rounded-[2px] font-medium hover:bg-edu-red hover:text-white transition-all whitespace-nowrap"
+            className="w-full sm:w-auto flex items-center justify-center gap-2 border border-amber-500 text-amber-600 px-5 py-2 rounded-[2px] font-medium hover:bg-amber-500 hover:text-white transition-all text-xs uppercase tracking-widest whitespace-nowrap"
           >
-            <Crown size={18} /> Voir les offres
+            <Crown size={16} /> Offres
           </Link>
+
           <Link
             to="/dashboard/create"
-            className="flex items-center justify-center gap-2 bg-edu-red text-white px-5 py-2.5 rounded-[2px] font-medium hover:bg-[#5a0808] transition-all shadow-[0_4px_14px_rgba(126,11,11,0.2)] hover:shadow-[0_6px_20px_rgba(126,11,11,0.3)] whitespace-nowrap"
+            className="w-full sm:w-auto flex items-center justify-center gap-2 bg-edu-red text-white px-5 py-2 rounded-[2px] font-medium hover:bg-edu-red-hover transition-all shadow-lg shadow-edu-red/20 whitespace-nowrap text-xs uppercase tracking-widest"
           >
-            <Plus size={18} /> Nouvelle fiche
+            <Plus size={16} /> Nouvelle fiche
           </Link>
         </div>
-      </div>
+      </motion.div>
 
-      {currentPlan === 'free' && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="mb-8 relative overflow-hidden bg-edu-dark rounded-2xl p-6 md:p-8 text-white shadow-xl border border-edu-red/20"
-        >
-          <div className="absolute top-0 right-0 w-64 h-64 bg-edu-red/10 blur-[80px] -mr-32 -mt-32"></div>
-          <div className="absolute bottom-0 left-0 w-48 h-48 bg-edu-red/10 blur-[60px] -ml-24 -mb-24"></div>
-
-          <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="text-center md:text-left max-w-2xl">
-              <div className="inline-flex items-center gap-2 bg-edu-red px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest mb-4">
-                <Sparkles size={12} fill="white" />
-                Passage au payant
+      {/* Profile Overview / Plan Banner (Branding context) */}
+      <motion.div variants={itemVariants}>
+        {currentPlan === 'free' ? (
+          <div className="mb-12 bg-white border border-edu-light/40 p-8 rounded-[2px] shadow-sm relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-edu-red/5 rounded-full -mr-16 -mt-16 transition-transform group-hover:scale-110"></div>
+            
+            <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-8">
+              <div className="max-w-2xl">
+                <div className="inline-flex items-center gap-2 text-edu-red bg-edu-red/5 px-3 py-1 rounded-sm text-[10px] font-bold uppercase tracking-widest mb-4">
+                  <Zap size={10} fill="currentColor" /> Plan Gratuit
+                </div>
+                <h3 className="font-serif text-2xl text-edu-black mb-3">Découvrez toute la puissance de l'IA pédagogique.</h3>
+                <p className="text-edu-dark/70 text-sm leading-relaxed mb-6">
+                  Vous explorez EduPlan avec {lessonsCount} fiches sur {FREE_PLAN_LIMIT}. 
+                  Simplifiez-vous la vie en passant à un volume supérieur pour vos préparations quotidiennes.
+                </p>
+                
+                <div className="w-full bg-edu-bg h-1 rounded-full overflow-hidden mb-2 max-w-sm">
+                  <motion.div 
+                    initial={{ width: 0 }}
+                    animate={{ width: `${freeProgress}%` }}
+                    className="h-full bg-edu-red shadow-[0_0_8px_rgba(126,11,11,0.4)]"
+                  />
+                </div>
+                <p className="text-[10px] font-mono opacity-50 uppercase tracking-tighter">Usage: {lessonsCount}/{FREE_PLAN_LIMIT} fiches</p>
               </div>
-              <h3 className="font-serif text-2xl md:text-3xl mb-2">Vos 5 fiches gratuites sont un point de départ, pas une limite durable</h3>
-              <p className="text-edu-bg/70 text-sm md:text-base">
-                Vous avez utilisé <strong>{lessonsCount}</strong> fiche(s) sur {FREE_PLAN_LIMIT} ce mois-ci. Passez au plan Standard pour aller jusqu'à {STANDARD_PLAN_LIMIT} fiches par mois, ou choisissez Premium pour supprimer toute contrainte et débloquer l'accès avancé.
-              </p>
-            </div>
-            <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
+              
               <Link
                 to="/pricing"
-                className="bg-edu-red hover:bg-edu-red/90 text-white px-8 py-3 rounded-full font-bold transition-all shadow-lg shadow-edu-red/20 flex items-center justify-center gap-2 group"
+                className="bg-edu-red hover:bg-edu-red-hover text-white px-8 py-3 rounded-[2px] font-bold uppercase tracking-widest text-xs transition-all shadow-md active:scale-95 whitespace-nowrap"
               >
-                Découvrir Standard et Premium
-                <ChevronRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                Passer au Premium
               </Link>
             </div>
           </div>
-          <div className="relative z-10 mt-6">
-            <div className="w-full bg-white/10 h-2 rounded-full overflow-hidden mb-2">
-              <div className="bg-edu-red h-full rounded-full" style={{ width: `${freeProgress}%` }}></div>
+        ) : (
+          <div className="mb-12 grid md:grid-cols-2 gap-6">
+            <div className="bg-white border border-amber-100 p-6 rounded-[2px] shadow-sm">
+              <div className="flex items-center gap-2 text-amber-600 mb-2">
+                <Layers3 size={16} />
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em]">Votre Abonnement</span>
+              </div>
+              <p className="font-serif text-3xl text-edu-black">{currentPlan === 'premium' ? 'Premium Illimité' : 'Standard 30/mois'}</p>
+              <p className="text-xs text-edu-dark/60 mt-3 italic">Vous profitez déjà d'un accès étendu aux fonctionnalités.</p>
             </div>
-            <p className="text-xs text-white/60">Progression du quota gratuit: {lessonsCount}/{FREE_PLAN_LIMIT} fiches</p>
+            
+            <Link to="/pricing" className="bg-[#FAF9F6] border border-edu-light/40 p-6 rounded-[2px] hover:border-edu-red/30 transition-all group">
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-edu-red mb-2">Amélioration</p>
+              <p className="font-serif text-2xl text-edu-black mb-2 flex items-center justify-between">
+                Comparer les offres
+                <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform" />
+              </p>
+              <p className="text-xs text-edu-dark/60">Consultez les limites et les avantages de chaque niveau.</p>
+            </Link>
           </div>
-        </motion.div>
-      )}
+        )}
+      </motion.div>
 
-      {currentPlan !== 'free' && (
-        <div className="mb-10 grid md:grid-cols-2 gap-4">
-          <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5">
-            <div className="flex items-center gap-2 text-amber-800 mb-2">
-              <Layers3 size={18} />
-              <span className="text-xs font-bold uppercase tracking-[0.2em]">Plan actif</span>
-            </div>
-            <p className="font-serif text-2xl text-edu-black">{currentPlan === 'premium' ? 'Premium' : 'Standard'}</p>
-            <p className="text-sm text-edu-dark/70 mt-2">Vous profitez déjà des fonctionnalités payantes. Vous pouvez revoir les offres à tout moment pour comparer les niveaux.</p>
-          </div>
-          <Link to="/pricing" className="rounded-2xl border border-edu-light/40 bg-white p-5 hover:border-edu-red transition-colors">
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-edu-red mb-2">Comparer les plans</p>
-            <p className="font-serif text-2xl text-edu-black mb-2">Voir les différences</p>
-            <p className="text-sm text-edu-dark/70">Retrouvez les limites, bénéfices et le détail des offres Standard et Premium.</p>
-          </Link>
-        </div>
-      )}
-
-      <section className="mb-12">
-        <h3 className="font-serif text-xl text-edu-black mb-6">Reprendre mes travaux</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {/* Recents Section */}
+      <motion.section variants={itemVariants} className="mb-16">
+        <h3 className="font-serif text-xl text-edu-black mb-8 border-b border-edu-light/20 pb-2">Reprendre mes travaux</h3>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {recentWorks.map((item) => (
             <motion.div
               key={item.id}
               onClick={() => handleCardClick(item.id)}
               whileHover={{ y: -4 }}
-              className="bg-white border border-edu-light/50 p-5 rounded-[2px] shadow-sm hover:shadow-md hover:border-edu-light transition-all cursor-pointer group"
+              className="bg-white border border-edu-light/50 p-6 rounded-[2px] shadow-sm hover:shadow-md transition-all cursor-pointer group"
             >
-              <div className="flex justify-between items-start mb-3">
-                <span className="text-[10px] font-mono uppercase tracking-widest text-edu-dark bg-edu-bg px-2 py-1 rounded-sm">{item.class}</span>
-                <span className="flex items-center gap-1 text-xs text-edu-dark"><Clock size={12} /> {item.date}</span>
+              <div className="flex justify-between items-center mb-4">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-edu-red bg-edu-red/5 px-2 py-0.5 rounded-sm">{item.class}</span>
+                <span className="flex items-center gap-1.5 text-[10px] font-mono opacity-40"><Clock size={12} /> {item.date}</span>
               </div>
-              <h4 className="font-medium text-edu-black mb-4 group-hover:text-edu-red transition-colors line-clamp-2">{item.title}</h4>
-              <div className="w-full bg-edu-bg h-1.5 rounded-full overflow-hidden">
-                <div className="bg-edu-red h-full rounded-full" style={{ width: '75%' }}></div>
+              <h4 className="font-serif text-lg text-edu-black mb-6 group-hover:text-edu-red transition-colors line-clamp-2 leading-tight">{item.title}</h4>
+              
+              <div className="flex items-center gap-3">
+                <div className="flex-1 bg-edu-bg h-1 rounded-full overflow-hidden">
+                  <div className="bg-edu-black/10 h-full" style={{ width: '100%' }}></div>
+                </div>
+                <span className="text-[10px] font-bold text-edu-dark/40 uppercase tracking-tighter">Fiche</span>
               </div>
             </motion.div>
           ))}
           {recentWorks.length === 0 && (
-            <div className="col-span-3 py-10 bg-white border border-dashed border-edu-light text-center rounded-[2px]">
-              <p className="text-edu-dark italic">Aucune fiche récente.</p>
+            <div className="col-span-3 py-12 bg-white border border-dashed border-edu-light/50 text-center rounded-[2px]">
+              <p className="text-edu-dark italic opacity-60">Aucun travail récent.</p>
             </div>
           )}
         </div>
-      </section>
+      </motion.section>
 
-      <section className="mb-12">
-        <div className="flex justify-between items-end mb-6">
-          <h3 className="font-serif text-xl text-edu-black">Mes dernières fiches pédagogiques</h3>
-          <Link to="/dashboard/library" className="text-sm text-edu-dark hover:text-edu-red transition-colors">Voir tout</Link>
+      {/* Main Library Library Section */}
+      <motion.section variants={itemVariants} className="mb-16">
+        <div className="flex justify-between items-end mb-8">
+          <h3 className="font-serif text-xl text-edu-black">Dernières fiches publiées</h3>
+          <Link to="/dashboard/library" className="group flex items-center gap-1 text-[10px] font-bold uppercase tracking-[0.15em] text-edu-dark/50 hover:text-edu-red transition-colors">
+            Voir la bibliothèque <ChevronRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
+          </Link>
         </div>
+        
         {filteredFiches.length === 0 ? (
-          <div className="py-10 bg-white border border-dashed border-edu-light text-center rounded-[2px]">
-            <p className="text-edu-dark italic">Aucune fiche trouvée.</p>
+          <div className="py-12 bg-white border border-dashed border-edu-light/50 text-center rounded-[2px]">
+            <p className="text-edu-dark italic opacity-60 text-sm">Aucune fiche trouvée.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredFiches.map((item) => (
-              <motion.div
-                key={item.id}
-                onClick={() => handleCardClick(item.id)}
-                whileHover={{ y: -4 }}
-                className="bg-white border border-edu-light/50 p-6 rounded-[2px] shadow-sm hover:shadow-md hover:border-edu-light transition-all cursor-pointer group relative"
-              >
-                <button onClick={(e) => { e.stopPropagation(); navigate('/dashboard/library'); }} className="absolute top-4 right-4 text-edu-light hover:text-edu-black opacity-0 group-hover:opacity-100 transition-opacity" title="Plus d'options">
-                  <MoreVertical size={18} />
-                </button>
-                <div className="flex gap-2 mb-3">
-                  <span className="text-[10px] font-mono font-bold text-edu-red">{item.subject}</span>
-                  <span className="text-[10px] font-mono text-edu-dark border-l border-edu-light/50 pl-2">{item.class}</span>
-                </div>
-                <h4 className="font-bold text-edu-black mb-2 group-hover:text-edu-red transition-colors">{item.title}</h4>
-                <p className="text-xs text-edu-dark mb-4">Modifié le {item.date}</p>
-                <div className="flex gap-2 flex-wrap">
-                  {item.tags?.map((tag, j) => (
-                    <span key={j} className="flex items-center gap-1 text-[10px] bg-edu-bg text-edu-dark px-2 py-1 rounded-sm">
-                      <Tag size={10} /> {tag}
-                    </span>
-                  ))}
-                </div>
-              </motion.div>
-            ))}
+            <AnimatePresence>
+              {filteredFiches.map((item) => (
+                <motion.div
+                  key={item.id}
+                  layout
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  onClick={() => handleCardClick(item.id)}
+                  whileHover={{ y: -4 }}
+                  className="bg-white border border-edu-light/40 p-6 rounded-[2px] shadow-sm hover:shadow-md transition-all cursor-pointer group relative"
+                >
+                  <button onClick={(e) => { e.stopPropagation(); navigate('/dashboard/library'); }} className="absolute top-5 right-5 text-edu-light hover:text-edu-red opacity-0 group-hover:opacity-100 transition-all" title="Options">
+                    <MoreVertical size={16} />
+                  </button>
+                  
+                  <div className="flex items-center gap-3 mb-4">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-edu-red">{item.subject}</span>
+                    <span className="text-[10px] font-medium text-edu-dark/40 bg-edu-bg px-2 py-0.5 rounded-sm">{item.class}</span>
+                  </div>
+                  
+                  <h4 className="font-serif text-lg text-edu-black mb-3 group-hover:text-edu-red transition-colors line-clamp-2">{item.title}</h4>
+                  
+                  <p className="text-[10px] text-edu-dark/40 mb-6 font-mono">Modifié le {item.date}</p>
+                  
+                  <div className="flex gap-2 flex-wrap pt-4 border-t border-edu-light/10">
+                    {item.tags?.map((tag, j) => (
+                      <span key={j} className="flex items-center gap-1 text-[10px] text-edu-dark/60 bg-edu-light/20 px-2 py-1 rounded-[2px] italic">
+                        <Tag size={10} /> {tag}
+                      </span>
+                    ))}
+                  </div>
+                </motion.div>
+              ))}
+            </AnimatePresence>
           </div>
         )}
-      </section>
+      </motion.section>
 
-      <section>
-        <h3 className="font-serif text-xl text-edu-black mb-6">Modèles pédagogiques populaires</h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      {/* Recommended Section (simplified models) */}
+      <motion.section variants={itemVariants}>
+        <h3 className="font-serif text-xl text-edu-black mb-8 border-b border-edu-light/20 pb-2">Modèles recommandés</h3>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {[
             { id: 'template-1', name: 'Analyse Littéraire' },
-            { id: 'template-2', name: 'TP Sciences' },
-            { id: 'template-3', name: 'Séquence Histoire' },
-            { id: 'template-4', name: 'Exercices Maths' }
+            { id: 'template-2', name: 'TP Sciences Pratiques' },
+            { id: 'template-3', name: 'Récit Historique' },
+            { id: 'template-4', name: 'Exercices de Mathématiques' }
           ].map((template) => (
-            <div
+            <motion.div
               key={template.id}
+              whileHover={{ y: -2 }}
               onClick={() => handleCardClick(template.id)}
-              className="bg-[#F5F2ED] border border-edu-light/40 p-4 rounded-[2px] hover:border-edu-red/50 cursor-pointer transition-colors text-center"
+              className="bg-white border border-edu-light/50 p-5 rounded-[2px] cursor-pointer hover:border-edu-red/40 transition-all text-center group shadow-sm"
             >
-              <FileText size={24} className="mx-auto mb-2 text-edu-dark" strokeWidth={1.5} />
-              <h4 className="text-sm font-medium text-edu-black">{template.name}</h4>
-            </div>
+              <div className="w-10 h-10 rounded-full bg-edu-bg flex items-center justify-center mx-auto mb-3 group-hover:bg-edu-red/5 transition-colors">
+                <FileText size={18} className="text-edu-dark/40 group-hover:text-edu-red/60 transition-colors" />
+              </div>
+              <h4 className="text-xs font-bold text-edu-black tracking-tight uppercase leading-tight">{template.name}</h4>
+            </motion.div>
           ))}
         </div>
-      </section>
-    </div>
+      </motion.section>
+    </motion.div>
   );
 }
