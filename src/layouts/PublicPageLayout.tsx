@@ -25,7 +25,7 @@ export default function PublicPageLayout() {
               </Button>
             </Link>
             <Link to="/dashboard">
-              <Button variant="primary" className="text-sm px-6 py-2.5">Accéder à l'application</Button>
+              <Button variant="primary" className="text-sm px-6 py-2.5">AccÃ©der Ã  l'application</Button>
             </Link>
           </div>
         </div>

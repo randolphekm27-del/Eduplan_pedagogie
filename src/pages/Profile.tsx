@@ -24,7 +24,7 @@ export default function Profile() {
 
       <div className="bg-white rounded-[4px] shadow-sm border border-edu-light/30 overflow-hidden">
         {/* Banner */}
-        <div className="h-32 bg-gradient-to-r from-edu-red to-edu-black relative">
+        <div className="h-32 bg-linear-to-r from-edu-red to-edu-black relative">
           <Link to="/dashboard/settings" className="absolute top-4 right-4 bg-white/20 hover:bg-white/40 backdrop-blur-md px-4 py-2 rounded-[2px] text-white text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 transition-colors">
             <Edit3 size={14} /> Modifier
           </Link>

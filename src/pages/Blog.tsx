@@ -342,7 +342,7 @@ export default function BlogPédagogiquePage() {
       )}
 
       {/* Newsletter */}
-      <div className="mt-16 bg-gradient-to-r from-edu-black/5 via-edu-red/5 to-edu-black/5 rounded-2xl p-8 md:p-10 text-center border border-edu-light/20">
+      <div className="mt-16 bg-linear-to-r from-edu-black/5 via-edu-red/5 to-edu-black/5 rounded-2xl p-8 md:p-10 text-center border border-edu-light/20">
         <div className="max-w-2xl mx-auto">
           <TrendingUp size={32} className="mx-auto text-edu-red mb-4" />
           <h3 className="font-serif text-2xl text-edu-black mb-2">Ne manquez aucun article</h3>

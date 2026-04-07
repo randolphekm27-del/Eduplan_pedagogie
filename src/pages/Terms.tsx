@@ -281,9 +281,9 @@ export default function ConditionsGénéralesPage() {
         initial={{ opacity: 0, scale: 0.98 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ delay: 0.4 }}
-        className="bg-gradient-to-r from-edu-black/5 to-edu-red/5 border border-edu-light/20 rounded-xl p-5 mb-10 flex items-start gap-3"
+        className="bg-linear-to-r from-edu-black/5 to-edu-red/5 border border-edu-light/20 rounded-xl p-5 mb-10 flex items-start gap-3"
       >
-        <CheckCircle2 size={22} className="text-edu-red flex-shrink-0 mt-0.5" />
+        <CheckCircle2 size={22} className="text-edu-red shrink-0 mt-0.5" />
         <div>
           <p className="font-medium text-edu-black">En utilisant EduPlan, vous acceptez nos conditions</p>
           <p className="text-sm text-edu-dark/70">La création d'un compte implique l'acceptation formelle et sans réserve de l'intégralité des présentes conditions générales d'utilisation.</p>
@@ -332,7 +332,7 @@ export default function ConditionsGénéralesPage() {
             transition={{ delay: idx * 0.05 }}
             className="scroll-mt-24 bg-white border border-edu-light/20 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300"
           >
-            <div className="border-b border-edu-light/20 bg-gradient-to-r from-edu-light/5 to-transparent px-6 py-4">
+            <div className="border-b border-edu-light/20 bg-linear-to-r from-edu-light/5 to-transparent px-6 py-4">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-edu-red/10 rounded-xl">
                   <section.icon size={22} className="text-edu-red" />
@@ -357,7 +357,7 @@ export default function ConditionsGénéralesPage() {
                       transition={{ delay: i * 0.05 }}
                       className="flex items-start gap-2"
                     >
-                      <CheckCircle2 size={16} className="text-edu-red mt-0.5 flex-shrink-0" />
+                      <CheckCircle2 size={16} className="text-edu-red mt-0.5 shrink-0" />
                       <span className="text-edu-dark/70">{point}</span>
                     </motion.li>
                   ))}
@@ -470,7 +470,7 @@ export default function ConditionsGénéralesPage() {
         initial={{ opacity: 0, y: 30 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
-        className="mt-12 bg-gradient-to-br from-edu-black/5 to-edu-red/5 rounded-2xl p-8 text-center border border-edu-light/20"
+        className="mt-12 bg-linear-to-br from-edu-black/5 to-edu-red/5 rounded-2xl p-8 text-center border border-edu-light/20"
       >
         <div className="max-w-2xl mx-auto">
           <Mail size={36} className="mx-auto text-edu-red mb-4" />

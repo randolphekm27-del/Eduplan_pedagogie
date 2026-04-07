@@ -1,0 +1,1 @@
+const fs = require('fs'); const lines = fs.readFileSync('src/pages/Pricing.tsx', 'utf8').split('\n'); const badLines = lines.map((l, i) => ({line: i+1, text: l.trim()})).filter(o => o.text.includes('\uFFFD') || o.text.includes('')); fs.writeFileSync('bad_lines.json', JSON.stringify(badLines, null, 2));

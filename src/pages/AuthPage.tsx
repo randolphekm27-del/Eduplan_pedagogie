@@ -322,7 +322,7 @@ export default function AuthPage() {
         </div>
 
         {/* Content Overlay */}
-        <div className="absolute bottom-0 left-0 right-0 p-16 bg-gradient-to-t from-edu-black via-edu-black/80 to-transparent">
+        <div className="absolute bottom-0 left-0 right-0 p-16 bg-linear-to-t from-edu-black via-edu-black/80 to-transparent">
           <h2 className="font-serif text-3xl text-white mb-4">La préparation de cours, <span className="text-edu-red italic">réinventée.</span></h2>
           <p className="text-white/60 text-lg max-w-xl leading-relaxed">Générez des séquences complètes, évaluez par compétences et gagnez des heures précieuses chaque semaine grâce à l'intelligence artificielle spécialisée.</p>
         </div>

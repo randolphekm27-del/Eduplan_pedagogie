@@ -306,7 +306,7 @@ export default function GuidesPage() {
               className="bg-white border border-edu-light/20 rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300"
             >
               {/* En-tête de la carte */}
-              <div className="border-b border-edu-light/20 bg-gradient-to-r from-edu-light/5 to-transparent px-5 py-4">
+              <div className="border-b border-edu-light/20 bg-linear-to-r from-edu-light/5 to-transparent px-5 py-4">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-edu-red/10 rounded-xl">
@@ -353,7 +353,7 @@ export default function GuidesPage() {
                   <div className="space-y-3">
                     {guide.steps.map((step, stepIdx) => (
                       <div key={stepIdx} className="flex items-start gap-3">
-                        <div className="w-6 h-6 bg-edu-red/10 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <div className="w-6 h-6 bg-edu-red/10 rounded-full flex items-center justify-center shrink-0 mt-0.5">
                           <span className="text-xs font-bold text-edu-red">{stepIdx + 1}</span>
                         </div>
                         <div>
@@ -366,7 +366,7 @@ export default function GuidesPage() {
 
                   <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mt-3">
                     <div className="flex items-start gap-2">
-                      <Lightbulb size={16} className="text-amber-600 flex-shrink-0 mt-0.5" />
+                      <Lightbulb size={16} className="text-amber-600 shrink-0 mt-0.5" />
                       <div>
                         <p className="text-xs font-medium text-amber-800">Astuce</p>
                         <p className="text-xs text-amber-700">{guide.tip}</p>
@@ -396,7 +396,7 @@ export default function GuidesPage() {
         initial={{ opacity: 0, y: 30 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
-        className="mt-16 bg-gradient-to-r from-edu-black/5 via-edu-red/5 to-edu-black/5 rounded-2xl p-8 text-center border border-edu-light/20"
+        className="mt-16 bg-linear-to-r from-edu-black/5 via-edu-red/5 to-edu-black/5 rounded-2xl p-8 text-center border border-edu-light/20"
       >
         <Video size={36} className="mx-auto text-edu-red mb-4" />
         <h2 className="font-serif text-2xl text-edu-black mb-2">Formation vidéo</h2>

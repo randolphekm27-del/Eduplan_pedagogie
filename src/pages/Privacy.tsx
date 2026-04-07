@@ -242,8 +242,8 @@ export default function PolitiquedeConfidentialitéPage() {
       </div>
 
       {/* Engagement de transparence */}
-      <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-4 mb-8 flex items-start gap-3">
-        <CheckCircle2 size={20} className="text-green-600 flex-shrink-0 mt-0.5" />
+      <div className="bg-linear-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-4 mb-8 flex items-start gap-3">
+        <CheckCircle2 size={20} className="text-green-600 shrink-0 mt-0.5" />
         <div>
           <p className="text-sm text-green-800 font-medium">Notre engagement</p>
           <p className="text-sm text-green-700">Vos données vous appartiennent. Nous ne les vendons pas, ne les louons pas et ne les utilisons pas pour entraîner des modèles d'IA externes.</p>
@@ -321,7 +321,7 @@ export default function PolitiquedeConfidentialitéPage() {
                 <ul className="space-y-2 mt-2">
                   {section.content.uses.map((use, idx) => (
                     <li key={idx} className="flex items-start gap-2">
-                      <CheckCircle2 size={16} className="text-edu-red mt-0.5 flex-shrink-0" />
+                      <CheckCircle2 size={16} className="text-edu-red mt-0.5 shrink-0" />
                       <span>{use}</span>
                     </li>
                   ))}
@@ -332,7 +332,7 @@ export default function PolitiquedeConfidentialitéPage() {
                 <ul className="space-y-2 mt-2">
                   {section.content.durations.map((duration, idx) => (
                     <li key={idx} className="flex items-start gap-2">
-                      <Clock size={16} className="text-edu-red mt-0.5 flex-shrink-0" />
+                      <Clock size={16} className="text-edu-red mt-0.5 shrink-0" />
                       <span>{duration}</span>
                     </li>
                   ))}
@@ -408,7 +408,7 @@ export default function PolitiquedeConfidentialitéPage() {
 
       {/* Réclamation CNIL */}
       <div className="mt-12 bg-amber-50 border border-amber-200 rounded-xl p-5 flex items-start gap-3">
-        <AlertCircle size={20} className="text-amber-600 flex-shrink-0 mt-0.5" />
+        <AlertCircle size={20} className="text-amber-600 shrink-0 mt-0.5" />
         <div className="text-sm">
           <p className="font-medium text-amber-800">Droit de réclamation</p>
           <p className="text-amber-700">
